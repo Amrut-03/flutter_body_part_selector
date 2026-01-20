@@ -12,8 +12,19 @@ import '../../../core/constants/muscle_ids.dart';
 /// 
 /// Supports multi-select, disabled muscles, animations, and more.
 class InteractiveBodySvg extends StatefulWidget {
-  /// The asset path to the SVG file
-  final String asset;
+  /// The asset path to the SVG file (optional)
+  /// 
+  /// If not provided, will automatically use package assets based on [isFront].
+  /// Package assets:
+  /// - Front: 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
+  /// - Back: 'packages/flutter_body_part_selector/assets/svg/body_back.svg'
+  final String? asset;
+
+  /// Whether to show the front view (used when [asset] is not provided)
+  /// 
+  /// If [asset] is provided, this parameter is ignored.
+  /// Defaults to `true` (front view).
+  final bool isFront;
 
   /// The currently selected muscles (multi-select)
   final Set<Muscle>? selectedMuscles;
@@ -86,7 +97,8 @@ class InteractiveBodySvg extends StatefulWidget {
 
   const InteractiveBodySvg({
     super.key,
-    required this.asset,
+    this.asset,
+    this.isFront = true,
     this.selectedMuscles,
     this.disabledMuscles,
     this.onMuscleTap,
@@ -110,6 +122,19 @@ class InteractiveBodySvg extends StatefulWidget {
     this.semanticLabelBuilder,
     this.isInitialSelection = false,
   });
+
+  /// Get the actual asset path to use
+  /// 
+  /// Returns the provided [asset] if set, otherwise returns the default
+  /// package asset based on [isFront].
+  String get _effectiveAsset {
+    if (asset != null) {
+      return asset!;
+    }
+    return isFront
+        ? 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
+        : 'packages/flutter_body_part_selector/assets/svg/body_back.svg';
+  }
 
   @override
   State<InteractiveBodySvg> createState() => _InteractiveBodySvgState();
@@ -178,7 +203,7 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg>
     
     // Only reload if necessary (prevent continuous state changes)
     final needsReload = 
-        oldWidget.asset != widget.asset ||
+        oldWidget._effectiveAsset != widget._effectiveAsset ||
         oldWidget.highlightColor != widget.highlightColor ||
         oldWidget.baseColor != widget.baseColor ||
         oldWidget.disabledColor != widget.disabledColor ||
@@ -219,15 +244,16 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg>
     try {
       // Use cached SVG string if available (for instant updates on selection changes)
       String svgString;
-      final assetChanged = _lastAsset != widget.asset;
+      final effectiveAsset = widget._effectiveAsset;
+      final assetChanged = _lastAsset != effectiveAsset;
       
       // Fast path: reuse original SVG if available and asset hasn't changed
       if (!assetChanged && _cachedSvg != null) {
         svgString = _cachedSvg!;
       } else {
         // Load from assets only when asset changes
-        svgString = await rootBundle.loadString(widget.asset);
-        _lastAsset = widget.asset;
+        svgString = await rootBundle.loadString(effectiveAsset);
+        _lastAsset = effectiveAsset;
         // Always cache the original SVG
         _cachedSvg = svgString;
       }
@@ -276,14 +302,14 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg>
 
       // Extract bounds for all muscle elements (only if asset changed or not extracted yet)
       // IMPORTANT: Always extract bounds on first load to enable tap detection
-      final boundsAssetChanged = _lastBoundsAsset != widget.asset;
+      final boundsAssetChanged = _lastBoundsAsset != effectiveAsset;
       if (boundsAssetChanged || _muscleBounds == null || _svgSize == null || _viewBoxOffset == null) {
         _groupPathBounds = null; // Reset before extracting
         _orderedPathIds = null; // Reset ordered lists
         _orderedGroupIds = null;
         // Extract bounds - cache this to avoid repeated extraction
         _muscleBounds = _extractMuscleBounds(document);
-        _lastBoundsAsset = widget.asset;
+        _lastBoundsAsset = effectiveAsset;
         // Ensure viewBoxOffset is set (it should be set above, but double-check)
         if (_viewBoxOffset == null) {
           final svgElement = document.findAllElements('svg').firstOrNull;

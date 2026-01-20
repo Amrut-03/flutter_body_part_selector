@@ -107,9 +107,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
                 ),
               Expanded(
                 child: InteractiveBodySvg(
-                  asset: controller.isFront
-                      ? 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
-                      : 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
+                  isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
                   onMuscleTap: controller.selectMuscle,
                 ),
@@ -314,9 +312,7 @@ class _BodySelectorPageState extends State<BodySelectorPage> {
               animation: controller,
               builder: (context, _) {
                 return InteractiveBodySvg(
-                  asset: controller.isFront
-                      ? 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
-                      : 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
+                  isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
                   onMuscleTap: controller.selectMuscle,
                 );
@@ -336,7 +332,7 @@ class _BodySelectorPageState extends State<BodySelectorPage> {
 
 ```dart
 InteractiveBodySvg(
-  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
+  isFront: true, // Use package's front body asset automatically
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   highlightColor: Colors.red.withOpacity(0.7), // Custom highlight color
@@ -350,7 +346,7 @@ InteractiveBodySvg(
 
 ```dart
 InteractiveBodySvg(
-  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
+  isFront: true, // Use package's front body asset automatically
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   width: 300, // Fixed width
@@ -364,7 +360,7 @@ InteractiveBodySvg(
 
 ```dart
 InteractiveBodySvg(
-  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
+  isFront: true, // Use package's front body asset automatically
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   enableSelection: true, // Enable/disable tap selection
@@ -447,7 +443,17 @@ InteractiveBodyWidget(
 )
 ```
 
-If you need to specify asset paths explicitly (for `InteractiveBodySvg` or custom paths):
+For `InteractiveBodySvg`, you can use the simplified syntax without specifying asset paths:
+
+```dart
+InteractiveBodySvg(
+  isFront: true, // Automatically uses package's front body asset
+  selectedMuscles: controller.selectedMuscles,
+  onMuscleTap: controller.selectMuscle,
+)
+```
+
+Or if you need to specify asset paths explicitly:
 
 ```dart
 InteractiveBodySvg(
@@ -492,7 +498,8 @@ A complete widget with built-in controller and UI. Perfect for quick integration
 The core widget for displaying the interactive body diagram.
 
 **Properties:**
-- `asset` (String, required): **MUST** be the package asset path: `'packages/flutter_body_part_selector/assets/svg/body_front.svg'` or `'packages/flutter_body_part_selector/assets/svg/body_back.svg'`. Custom SVG files are not supported.
+- `asset` (String?, optional): Custom asset path. If not provided, automatically uses package assets based on [isFront]. **Note:** Custom SVG files are not supported - only package assets work correctly.
+- `isFront` (bool, default: true): Whether to show front view. Used when [asset] is not provided to automatically select the correct package asset.
 - `selectedMuscles` (Set<Muscle>?, optional): Currently selected muscles (multi-select)
 - `onMuscleTap` (Function(Muscle)?, optional): Callback when a muscle is tapped
 - `highlightColor` (Color?, optional): Color for highlighting selected muscles (default: Colors.blue with opacity)
@@ -653,11 +660,17 @@ InteractiveBodySvg(
 ### ✅ Do: Use the package's included assets
 
 ```dart
-// ✅ CORRECT - Use package assets
+// ✅ CORRECT - Simplest way (automatically uses package assets)
+InteractiveBodySvg(
+  isFront: true, // Automatically uses package's front body asset
+)
+
+// ✅ CORRECT - Or specify asset path explicitly
 InteractiveBodySvg(
   asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
 )
-// Or use InteractiveBodyWidget which uses defaults automatically
+
+// ✅ CORRECT - Or use InteractiveBodyWidget which uses defaults automatically
 InteractiveBodyWidget(...)
 ```
 
