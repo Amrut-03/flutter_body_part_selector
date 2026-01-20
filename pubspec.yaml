@@ -1,6 +1,6 @@
 name: flutter_body_part_selector
 description: "Interactive body selector for Flutter. Tap muscles on SVG body diagram or select programmatically with visual highlighting. Includes built-in assets."
-version: 1.2.0
+version: 1.1.5
 homepage: https://github.com/Amrut-03/flutter_body_part_selector
 repository: https://github.com/Amrut-03/flutter_body_part_selector
 
