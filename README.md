@@ -4,6 +4,8 @@ An interactive body selector package for Flutter that allows users to select mus
 
 **⚠️ IMPORTANT: This package includes mandatory SVG assets that must be used. Custom SVG files are not supported.**
 
+https://github.com/user-attachments/assets/8ba0b47b-fa72-4055-bee8-26f50427437c
+
 ## Features
 
 - 🎯 **Interactive Muscle Selection**: Tap on any muscle in the body diagram to select it
