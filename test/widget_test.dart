@@ -27,7 +27,7 @@ void main() {
 
   testWidgets('BodyMapController test', (WidgetTester tester) async {
     final controller = BodyMapController();
-    
+
     // Test initial state
     expect(controller.selectedMuscles.isEmpty, true);
     expect(controller.isFront, true);
@@ -36,7 +36,7 @@ void main() {
     controller.selectMuscle(Muscle.bicepsLeft);
     expect(controller.isSelected(Muscle.bicepsLeft), true);
     expect(controller.selectedMuscles.length, 1);
-    
+
     // Test toggle selection
     controller.selectMuscle(Muscle.bicepsLeft);
     expect(controller.isSelected(Muscle.bicepsLeft), false);
