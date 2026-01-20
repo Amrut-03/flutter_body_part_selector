@@ -95,6 +95,19 @@ class InteractiveBodySvg extends StatefulWidget {
   /// Whether to use initial selection without triggering callbacks
   final bool isInitialSelection;
 
+  /// Creates an interactive body SVG widget.
+  /// 
+  /// The [asset] parameter is optional. If not provided, the widget will
+  /// automatically use package assets based on [isFront].
+  /// 
+  /// Example:
+  /// ```dart
+  /// InteractiveBodySvg(
+  ///   isFront: true,
+  ///   selectedMuscles: controller.selectedMuscles,
+  ///   onMuscleTap: controller.selectMuscle,
+  /// )
+  /// ```
   const InteractiveBodySvg({
     super.key,
     this.asset,

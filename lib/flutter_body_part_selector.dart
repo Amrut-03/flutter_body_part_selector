@@ -1,8 +1,9 @@
-// Interactive Body Selector Package
-// 
-// A Flutter package that provides an interactive body diagram where users
-// can select muscles by tapping on them. Selected muscles are visually
-// highlighted, and the selection can be accessed programmatically.
+/// Interactive Body Selector Package
+/// 
+/// A Flutter package that provides an interactive body diagram where users
+/// can select muscles by tapping on them. Selected muscles are visually
+/// highlighted, and the selection can be accessed programmatically.
+library flutter_body_part_selector;
 
 // Core models
 export 'core/models/muscle.dart';

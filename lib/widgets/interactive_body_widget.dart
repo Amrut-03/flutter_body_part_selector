@@ -3,27 +3,15 @@ import '../core/models/muscle.dart';
 import '../features/body_map/body_map_controller.dart';
 import '../features/body_map/widgets/interactive_body_svg.dart';
 
-/// A complete interactive body selector widget with built-in controller
+/// A complete interactive body selector widget with built-in controller.
 /// 
 /// This widget provides a ready-to-use body selector with front/back view
-/// toggle and muscle selection capabilities.
-/// 
-/// The package includes default SVG assets, so you can use it without specifying asset paths:
+/// toggle and muscle selection capabilities. The package includes default
+/// SVG assets, so you can use it without specifying asset paths.
 /// 
 /// Example (simplest usage):
 /// ```dart
 /// InteractiveBodyWidget(
-///   onMuscleSelected: (muscle) {
-///     print('Selected: $muscle');
-///   },
-/// )
-/// ```
-/// 
-/// Or specify custom asset paths if needed:
-/// ```dart
-/// InteractiveBodyWidget(
-///   frontAsset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
-///   backAsset: 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
 ///   onMuscleSelected: (muscle) {
 ///     print('Selected: $muscle');
 ///   },

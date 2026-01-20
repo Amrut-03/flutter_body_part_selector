@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../core/models/muscle.dart';
 
-/// Controller for managing the interactive body map state
-/// Supports multi-muscle selection only
+/// Controller for managing the interactive body map state.
+/// 
+/// Supports multi-muscle selection only. Use this controller to programmatically
+/// manage muscle selection, view orientation, and disabled muscles.
+/// 
+/// Example:
+/// ```dart
+/// final controller = BodyMapController();
+/// controller.selectMuscle(Muscle.bicepsLeft);
+/// ```
 class BodyMapController extends ChangeNotifier {
   /// The currently selected muscles (multi-select only)
   final Set<Muscle> _selectedMuscles = {};

@@ -1,3 +1,9 @@
+## 1.1.5
+
+* **FIXED**: Shortened package description to meet pub.dev requirements (60-180 characters)
+* **IMPROVED**: Added missing dartdoc comments for better API documentation
+* **NEW**: Added example directory with a complete example app
+
 ## 1.1.4
 
 * **NEW**: Added demo video to README for better package showcase
