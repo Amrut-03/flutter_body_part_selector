@@ -20,7 +20,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_body_part_selector: ^1.2.0
+  flutter_body_part_selector: ^1.1.2
 ```
 
 Then run:

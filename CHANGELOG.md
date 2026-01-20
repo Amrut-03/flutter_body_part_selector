@@ -1,7 +1,11 @@
-## 1.2.0
+## 1.1.2
 
 * **NEW**: Added setter for `selectedMuscles` property - now supports `controller.selectedMuscles = {...}` syntax for convenience
 * **FIXED**: Removed trailing garbage text from README.md
+
+## 1.1.1
+
+* Minor version update
 
 ## 1.1.0
 
@@ -9,7 +13,6 @@
 * **NEW**: Added `deselectMuscle()` method to deselect a specific muscle
 * **NEW**: Added `setSelectedMuscles()` method to replace entire selection programmatically
 * **NEW**: Added `selectMultiple()` method to add multiple muscles without clearing existing selection
-* **NEW**: Added setter for `selectedMuscles` property - now you can use `controller.selectedMuscles = {...}` syntax
 * **NEW**: Added constructor to `BodyMapController` for initial state (selected muscles, disabled muscles, initial view)
 * **IMPROVED**: Enhanced documentation with clear read-only vs writable property markers
 * **IMPROVED**: Added comprehensive "Common Pitfalls" section to README
