@@ -130,13 +130,11 @@ class _InteractiveBodyWidgetState extends State<InteractiveBodyWidget> {
   @override
   void initState() {
     super.initState();
-    _controller = BodyMapController();
-    if (!widget.initialIsFront) {
-      _controller.setBackView();
-    }
-    if (widget.selectedMuscles != null && widget.selectedMuscles!.isNotEmpty) {
-      _controller.setInitialSelection(widget.selectedMuscles!);
-    }
+    // Use constructor with initial state for better performance
+    _controller = BodyMapController(
+      initialSelectedMuscles: widget.selectedMuscles,
+      initialIsFront: widget.initialIsFront,
+    );
     _controller.addListener(_onControllerChanged);
   }
 
@@ -145,7 +143,7 @@ class _InteractiveBodyWidgetState extends State<InteractiveBodyWidget> {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedMuscles != oldWidget.selectedMuscles) {
       if (widget.selectedMuscles != null && widget.selectedMuscles!.isNotEmpty) {
-        _controller.setInitialSelection(widget.selectedMuscles!);
+        _controller.setSelectedMuscles(widget.selectedMuscles!);
       } else {
         _controller.clearSelection();
       }

@@ -127,13 +127,15 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
 
 The `BodyMapController` manages the state of the body selector:
 
+#### Basic Usage
+
 ```dart
 final controller = BodyMapController();
 
-// Select a muscle programmatically
+// Select a muscle programmatically (toggles if already selected)
 controller.selectMuscle(Muscle.bicepsLeft);
 
-// Clear selection
+// Clear all selections
 controller.clearSelection();
 
 // Toggle between front and back view
@@ -143,9 +145,186 @@ controller.toggleView();
 controller.setFrontView();
 controller.setBackView();
 
-// Access current state
-final selected = controller.selectedMuscle;
-final isFront = controller.isFront;
+// Access current state (read-only)
+final selected = controller.selectedMuscles; // Returns Set<Muscle>
+final isFront = controller.isFront; // Writable: can be set directly
+```
+
+#### Initialization with Pre-selected Muscles
+
+```dart
+// Create controller with initial selection
+final controller = BodyMapController(
+  initialSelectedMuscles: {Muscle.bicepsLeft, Muscle.tricepsRight},
+  initialDisabledMuscles: {Muscle.chestLeft}, // Optional: pre-disable muscles
+  initialIsFront: true, // Optional: start with back view
+);
+```
+
+#### Programmatic Selection Management
+
+```dart
+final controller = BodyMapController();
+
+// Toggle a muscle's selection state
+controller.toggleMuscle(Muscle.bicepsLeft);
+
+// Deselect a specific muscle
+controller.deselectMuscle(Muscle.bicepsLeft);
+
+// Set entire selection (replaces current selection)
+controller.setSelectedMuscles({
+  Muscle.bicepsLeft,
+  Muscle.tricepsRight,
+  Muscle.chestLeft,
+});
+
+// Add multiple muscles to current selection (without clearing)
+controller.selectMultiple({
+  Muscle.bicepsLeft,
+  Muscle.tricepsRight,
+});
+
+// Check if a muscle is selected
+if (controller.isSelected(Muscle.bicepsLeft)) {
+  print('Biceps left is selected');
+}
+
+// Get all selected muscles (read-only Set)
+final selected = controller.selectedMuscles;
+print('Selected ${selected.length} muscles');
+```
+
+#### Managing Disabled Muscles
+
+```dart
+final controller = BodyMapController();
+
+// Disable a muscle (locks it, removes from selection)
+controller.disableMuscle(Muscle.chestLeft);
+
+// Enable a muscle (unlocks it)
+controller.enableMuscle(Muscle.chestLeft);
+
+// Set multiple disabled muscles at once
+controller.setDisabledMuscles({
+  Muscle.chestLeft,
+  Muscle.chestRight,
+});
+
+// Check if a muscle is disabled
+if (controller.isDisabled(Muscle.chestLeft)) {
+  print('Chest left is disabled');
+}
+```
+
+#### Complete Example: Programmatic Selection Management
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_body_part_selector/flutter_body_part_selector.dart';
+
+class BodySelectorPage extends StatefulWidget {
+  @override
+  State<BodySelectorPage> createState() => _BodySelectorPageState();
+}
+
+class _BodySelectorPageState extends State<BodySelectorPage> {
+  late BodyMapController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with some pre-selected muscles
+    controller = BodyMapController(
+      initialSelectedMuscles: {Muscle.bicepsLeft, Muscle.tricepsRight},
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Body Selector')),
+      body: Column(
+        children: [
+          // Control buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Wrap(
+              spacing: 8.0,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // Select multiple muscles programmatically
+                    controller.selectMultiple({
+                      Muscle.bicepsLeft,
+                      Muscle.bicepsRight,
+                    });
+                  },
+                  child: const Text('Select Both Biceps'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Set entire selection
+                    controller.setSelectedMuscles({
+                      Muscle.chestLeft,
+                      Muscle.chestRight,
+                    });
+                  },
+                  child: const Text('Select Chest Only'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Clear all selections
+                    controller.clearSelection();
+                  },
+                  child: const Text('Clear All'),
+                ),
+              ],
+            ),
+          ),
+          // Display selected muscles
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.blue.shade900,
+                width: double.infinity,
+                child: Text(
+                  'Selected: ${controller.selectedMuscles.length} muscles',
+                  style: const TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            },
+          ),
+          // Body diagram
+          Expanded(
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                return InteractiveBodySvg(
+                  asset: controller.isFront
+                      ? 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
+                      : 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
+                  selectedMuscles: controller.selectedMuscles,
+                  onMuscleTap: controller.selectMuscle,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 ```
 
 ### Customization Options
@@ -329,20 +508,149 @@ The core widget for displaying the interactive body diagram.
 
 Controller for managing the body selector state.
 
-**Methods:**
-- `selectMuscle(Muscle)`: Select a muscle
-- `clearSelection()`: Clear the current selection
+**Constructor:**
+- `BodyMapController({Set<Muscle>? initialSelectedMuscles, Set<Muscle>? initialDisabledMuscles, bool initialIsFront = true})`: Create a controller with optional initial state
+
+**Selection Methods (Writable):**
+- `selectMuscle(Muscle)`: Select or toggle a muscle (if already selected, deselects it)
+- `toggleMuscle(Muscle)`: Explicitly toggle a muscle's selection state
+- `deselectMuscle(Muscle)`: Deselect a specific muscle
+- `setSelectedMuscles(Set<Muscle>)`: Set the entire selection (replaces current selection)
+- `selectMultiple(Set<Muscle>)`: Add multiple muscles to current selection (without clearing)
+- `clearSelection()`: Clear all selections
+
+**View Methods (Writable):**
 - `toggleView()`: Toggle between front and back view
 - `setFrontView()`: Set view to front
 - `setBackView()`: Set view to back
 
+**Disabled Muscle Methods (Writable):**
+- `disableMuscle(Muscle)`: Disable a muscle (locks it, removes from selection)
+- `enableMuscle(Muscle)`: Enable a muscle (unlocks it)
+- `setDisabledMuscles(Set<Muscle>)`: Set multiple disabled muscles at once
+
 **Properties:**
-- `selectedMuscles` (Set<Muscle>): Currently selected muscles (multi-select)
-- `isFront` (bool): Whether showing front view
+- `selectedMuscles` (Set<Muscle>, **read-only**): Currently selected muscles (multi-select). Use selection methods to modify.
+- `disabledMuscles` (Set<Muscle>, **read-only**): Currently disabled muscles. Use disabled muscle methods to modify.
+- `isFront` (bool, **writable**): Whether showing front view. Can be set directly or use view methods.
+- `isSelected(Muscle)` (bool, **read-only**): Check if a muscle is selected
+- `isDisabled(Muscle)` (bool, **read-only**): Check if a muscle is disabled
 
 ### `Muscle`
 
 Enum representing all available muscles. See the "Available Muscles" section above for the complete list.
+
+## Common Pitfalls
+
+### ❌ Don't: Try to modify `selectedMuscles` directly
+
+```dart
+// ❌ WRONG - This won't work because selectedMuscles is read-only
+controller.selectedMuscles.add(Muscle.bicepsLeft); // Error!
+controller.selectedMuscles.clear(); // Error!
+```
+
+### ✅ Do: Use the provided methods
+
+```dart
+// ✅ CORRECT - Use the controller methods
+controller.selectMuscle(Muscle.bicepsLeft);
+controller.setSelectedMuscles({Muscle.bicepsLeft, Muscle.tricepsRight});
+controller.clearSelection();
+```
+
+### ❌ Don't: Forget to listen to controller changes
+
+```dart
+// ❌ WRONG - UI won't update when selection changes
+final controller = BodyMapController();
+controller.selectMuscle(Muscle.bicepsLeft);
+// Widget won't rebuild automatically
+```
+
+### ✅ Do: Use AnimatedBuilder or listen to changes
+
+```dart
+// ✅ CORRECT - Wrap with AnimatedBuilder
+AnimatedBuilder(
+  animation: controller,
+  builder: (context, _) {
+    return Text('Selected: ${controller.selectedMuscles.length}');
+  },
+)
+```
+
+### ❌ Don't: Create controller in build method
+
+```dart
+// ❌ WRONG - Creates new controller on every rebuild
+Widget build(BuildContext context) {
+  final controller = BodyMapController(); // Don't do this!
+  return InteractiveBodySvg(...);
+}
+```
+
+### ✅ Do: Create controller in initState or use late initialization
+
+```dart
+// ✅ CORRECT - Create once in initState
+class _MyWidgetState extends State<MyWidget> {
+  late BodyMapController controller;
+  
+  @override
+  void initState() {
+    super.initState();
+    controller = BodyMapController();
+  }
+  
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+```
+
+### ❌ Don't: Forget to dispose the controller
+
+```dart
+// ❌ WRONG - Memory leak!
+class _MyWidgetState extends State<MyWidget> {
+  final controller = BodyMapController();
+  // Missing dispose() call
+}
+```
+
+### ✅ Do: Always dispose controllers
+
+```dart
+// ✅ CORRECT - Always dispose
+@override
+void dispose() {
+  controller.dispose();
+  super.dispose();
+}
+```
+
+### ❌ Don't: Try to use custom SVG assets
+
+```dart
+// ❌ WRONG - Custom SVG files are not supported
+InteractiveBodySvg(
+  asset: 'assets/my_custom_body.svg', // Won't work correctly!
+)
+```
+
+### ✅ Do: Use the package's included assets
+
+```dart
+// ✅ CORRECT - Use package assets
+InteractiveBodySvg(
+  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
+)
+// Or use InteractiveBodyWidget which uses defaults automatically
+InteractiveBodyWidget(...)
+```
 
 ## Contributing
 
@@ -354,6 +662,7 @@ This project is licensed under the MIT License.
 
 ## Support
 
-If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/yourusername/flutter_body_part_selector).
-#   f l u t t e r _ b o d y _ p a r t _ s e l e c t o r  
+If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/Amrut-03/flutter_body_part_selector).
+#   f l u t t e r _ b o d y _ p a r t _ s e l e c t o r 
+ 
  
