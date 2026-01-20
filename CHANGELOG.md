@@ -1,3 +1,7 @@
+## 1.1.4
+
+* **NEW**: Added demo video to README for better package showcase
+
 ## 1.1.3
 
 * **NEW**: Made `asset` parameter optional in `InteractiveBodySvg` - now you can use `isFront` parameter to automatically use package assets without specifying paths
