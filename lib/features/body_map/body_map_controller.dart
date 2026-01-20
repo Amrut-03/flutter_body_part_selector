@@ -37,7 +37,25 @@ class BodyMapController extends ChangeNotifier {
   /// 
   /// To modify selection, use methods like [selectMuscle], [deselectMuscle],
   /// [toggleMuscle], [setSelectedMuscles], or [selectMultiple].
+  /// 
+  /// You can also use the setter to replace the entire selection:
+  /// ```dart
+  /// controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
+  /// ```
   Set<Muscle> get selectedMuscles => Set.unmodifiable(_selectedMuscles);
+
+  /// Set selected muscles (replaces entire selection)
+  /// 
+  /// This is equivalent to calling [setSelectedMuscles]. Disabled muscles
+  /// will be automatically excluded.
+  /// 
+  /// Example:
+  /// ```dart
+  /// controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
+  /// ```
+  set selectedMuscles(Set<Muscle> muscles) {
+    setSelectedMuscles(muscles);
+  }
 
   /// Check if a muscle is selected (read-only)
   bool isSelected(Muscle muscle) => _selectedMuscles.contains(muscle);

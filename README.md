@@ -20,7 +20,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_body_part_selector: ^1.0.0
+  flutter_body_part_selector: ^1.2.0
 ```
 
 Then run:
@@ -94,13 +94,13 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
         builder: (context, _) {
           return Column(
             children: [
-              if (controller.selectedMuscle != null)
+              if (controller.selectedMuscles.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: Colors.blue.shade900,
                   width: double.infinity,
                   child: Text(
-                    'Selected: ${controller.selectedMuscle.toString()}',
+                    'Selected: ${controller.selectedMuscles.length} muscles',
                     style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
@@ -110,7 +110,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
                   asset: controller.isFront
                       ? 'packages/flutter_body_part_selector/assets/svg/body_front.svg'
                       : 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
-                  selectedMuscle: controller.selectedMuscle,
+                  selectedMuscles: controller.selectedMuscles,
                   onMuscleTap: controller.selectMuscle,
                 ),
               ),
@@ -145,9 +145,12 @@ controller.toggleView();
 controller.setFrontView();
 controller.setBackView();
 
-// Access current state (read-only)
-final selected = controller.selectedMuscles; // Returns Set<Muscle>
+// Access current state
+final selected = controller.selectedMuscles; // Returns Set<Muscle> (read-only getter)
 final isFront = controller.isFront; // Writable: can be set directly
+
+// Set entire selection using setter (convenience)
+controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
 ```
 
 #### Initialization with Pre-selected Muscles
@@ -530,7 +533,10 @@ Controller for managing the body selector state.
 - `setDisabledMuscles(Set<Muscle>)`: Set multiple disabled muscles at once
 
 **Properties:**
-- `selectedMuscles` (Set<Muscle>, **read-only**): Currently selected muscles (multi-select). Use selection methods to modify.
+- `selectedMuscles` (Set<Muscle>, **read-only getter, writable setter**): Currently selected muscles (multi-select). 
+  - **Getter**: Returns read-only Set of selected muscles
+  - **Setter**: Replaces entire selection (equivalent to `setSelectedMuscles()`)
+  - Example: `controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};`
 - `disabledMuscles` (Set<Muscle>, **read-only**): Currently disabled muscles. Use disabled muscle methods to modify.
 - `isFront` (bool, **writable**): Whether showing front view. Can be set directly or use view methods.
 - `isSelected(Muscle)` (bool, **read-only**): Check if a muscle is selected
@@ -542,18 +548,21 @@ Enum representing all available muscles. See the "Available Muscles" section abo
 
 ## Common Pitfalls
 
-### ❌ Don't: Try to modify `selectedMuscles` directly
+### ❌ Don't: Try to modify `selectedMuscles` Set directly
 
 ```dart
-// ❌ WRONG - This won't work because selectedMuscles is read-only
+// ❌ WRONG - This won't work because the Set is unmodifiable
 controller.selectedMuscles.add(Muscle.bicepsLeft); // Error!
 controller.selectedMuscles.clear(); // Error!
 ```
 
-### ✅ Do: Use the provided methods
+### ✅ Do: Use the setter or provided methods
 
 ```dart
-// ✅ CORRECT - Use the controller methods
+// ✅ CORRECT - Use the setter (replaces entire selection)
+controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
+
+// ✅ CORRECT - Or use the controller methods
 controller.selectMuscle(Muscle.bicepsLeft);
 controller.setSelectedMuscles({Muscle.bicepsLeft, Muscle.tricepsRight});
 controller.clearSelection();
@@ -663,6 +672,3 @@ This project is licensed under the MIT License.
 ## Support
 
 If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/Amrut-03/flutter_body_part_selector).
-#   f l u t t e r _ b o d y _ p a r t _ s e l e c t o r 
- 
- 
