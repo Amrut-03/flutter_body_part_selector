@@ -1,8 +1,11 @@
+## 1.1.3
+
+* **NEW**: Made `asset` parameter optional in `InteractiveBodySvg` - now you can use `isFront` parameter to automatically use package assets without specifying paths
+* **IMPROVED**: Simplified usage - no need to manually specify asset paths when using package assets
+
 ## 1.1.2
 
 * **NEW**: Added setter for `selectedMuscles` property - now supports `controller.selectedMuscles = {...}` syntax for convenience
-* **NEW**: Made `asset` parameter optional in `InteractiveBodySvg` - now you can use `isFront` parameter to automatically use package assets without specifying paths
-* **IMPROVED**: Simplified usage - no need to manually specify asset paths when using package assets
 * **FIXED**: Removed trailing garbage text from README.md
 
 ## 1.1.1
