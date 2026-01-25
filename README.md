@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/8ba0b47b-fa72-4055-bee8-26f50427437c
 - 🎨 **Visual Highlighting**: Selected muscles are automatically highlighted with customizable colors
 - 🔄 **Front/Back Views**: Toggle between front and back body views
 - 📱 **Programmatic Control**: Select muscles programmatically using the controller
-- 🎛️ **Customizable**: Customize highlight colors and base colors
+- 🎛️ **Customizable**: Customize highlight colors and disabled muscle colors
 - 📦 **Easy to Use**: Simple API with minimal setup required - includes all required assets
 - 🎨 **Built-in Assets**: Package includes mandatory SVG body diagrams (front and back views)
 
@@ -22,7 +22,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_body_part_selector: ^1.1.5
+  flutter_body_part_selector: ^1.2.0
 ```
 
 Then run:
@@ -52,7 +52,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: InteractiveBodyWidget(
-        // Asset paths are optional - package includes default assets
         onMuscleSelected: (muscle) {
           print('Selected muscle: $muscle');
         },
@@ -334,11 +333,11 @@ class _BodySelectorPageState extends State<BodySelectorPage> {
 
 ```dart
 InteractiveBodySvg(
-  isFront: true, // Use package's front body asset automatically
+  isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   highlightColor: Colors.red.withOpacity(0.7), // Custom highlight color
-  baseColor: Colors.white, // Custom base color for unselected muscles
+  disabledColor: Colors.grey, // Custom color for disabled muscles
   selectedStrokeWidth: 3.0, // Stroke width for selected muscles
   unselectedStrokeWidth: 1.0, // Stroke width for unselected muscles
 )
@@ -348,7 +347,7 @@ InteractiveBodySvg(
 
 ```dart
 InteractiveBodySvg(
-  isFront: true, // Use package's front body asset automatically
+  isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   width: 300, // Fixed width
@@ -362,11 +361,11 @@ InteractiveBodySvg(
 
 ```dart
 InteractiveBodySvg(
-  isFront: true, // Use package's front body asset automatically
+  isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
   enableSelection: true, // Enable/disable tap selection
-  hitTestPadding: 15.0, // Padding for hit-testing (makes taps more forgiving)
+  hitTestPadding: 2.0, // Padding for hit-testing (makes taps more forgiving)
   onMuscleTapDisabled: (muscle) {
     // Called when a muscle is tapped but selection is disabled
     print('Tapped $muscle but selection is disabled');
@@ -380,21 +379,18 @@ The `InteractiveBodyWidget` provides a complete solution with built-in UI:
 
 ```dart
 InteractiveBodyWidget(
-  frontAsset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
-  backAsset: 'packages/flutter_body_part_selector/assets/svg/body_back.svg',
   onMuscleSelected: (muscle) {
     print('Selected: $muscle');
   },
   highlightColor: Colors.blue,
-  baseColor: Colors.white,
   showFlipButton: true, // Show flip button in app bar
   showClearButton: true, // Show clear button in app bar
   backgroundColor: Colors.black, // Background color
-  selectedMuscleHeader: (muscle) {
-    // Custom header widget
+  selectedMusclesHeader: (muscles) {
+    // Custom header widget - receives Set<Muscle>
     return Container(
       padding: EdgeInsets.all(16),
-      child: Text('Selected: $muscle'),
+      child: Text('Selected: ${muscles.length} muscles'),
     );
   },
 )
@@ -409,16 +405,14 @@ The package supports the following muscles:
 - Delts (Left/Right)
 - Chest (Left/Right)
 - Abs
-- Lats Front (Left/Right)
 - Triceps (Left/Right)
 - Biceps (Left/Right)
-- Biceps Brachialis (Left/Right)
 - Forearms (Left/Right)
 - Quads (Left/Right)
 - Calves (Left/Right)
 
 ### Back View
-- Lats Back (Left/Right)
+- Lats (Left/Right)
 - Lower Lats Back (Left/Right)
 - Glutes (Left/Right)
 - Hamstrings (Left/Right)
@@ -445,22 +439,13 @@ InteractiveBodyWidget(
 )
 ```
 
-For `InteractiveBodySvg`, you can use the simplified syntax without specifying asset paths:
+For `InteractiveBodySvg`, simply use the `isFront` parameter:
 
 ```dart
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
   onMuscleTap: controller.selectMuscle,
-)
-```
-
-Or if you need to specify asset paths explicitly:
-
-```dart
-InteractiveBodySvg(
-  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
-  // ...
 )
 ```
 
@@ -473,19 +458,16 @@ InteractiveBodySvg(
 A complete widget with built-in controller and UI. Perfect for quick integration.
 
 **Properties:**
-- `frontAsset` (String?, optional): Path to the front body SVG. Defaults to `'packages/flutter_body_part_selector/assets/svg/body_front.svg'` if not specified. Custom SVG files are not supported.
-- `backAsset` (String?, optional): Path to the back body SVG. Defaults to `'packages/flutter_body_part_selector/assets/svg/body_back.svg'` if not specified. Custom SVG files are not supported.
 - `onMuscleSelected` (Function(Muscle)?, optional): Callback when a muscle is selected
 - `onSelectionCleared` (VoidCallback?, optional): Callback when selection is cleared
 - `selectedMuscles` (Set<Muscle>?, optional): Programmatically set selected muscles (multi-select)
 - `initialIsFront` (bool, default: true): Initial view (front or back)
 - `highlightColor` (Color?, optional): Color for highlighting selected muscles
-- `baseColor` (Color?, optional): Base color for unselected muscles
 - `selectedStrokeWidth` (double, default: 2.0): Stroke width for selected muscles
 - `unselectedStrokeWidth` (double, default: 1.0): Stroke width for unselected muscles
 - `enableSelection` (bool, default: true): Enable/disable selection
 - `fit` (BoxFit, default: BoxFit.contain): How to fit the SVG
-- `hitTestPadding` (double, default: 10.0): Padding for hit-testing
+- `hitTestPadding` (double, default: 2.0): Padding for hit-testing
 - `width` (double?, optional): Fixed width
 - `height` (double?, optional): Fixed height
 - `alignment` (Alignment, default: Alignment.center): Alignment of SVG
@@ -493,28 +475,29 @@ A complete widget with built-in controller and UI. Perfect for quick integration
 - `showClearButton` (bool, default: true): Show clear button in app bar
 - `appBar` (PreferredSizeWidget?, optional): Custom app bar
 - `backgroundColor` (Color?, optional): Background color
-- `selectedMuscleHeader` (Widget Function(Muscle)?, optional): Custom header widget
+- `selectedMusclesHeader` (Widget Function(Set<Muscle>)?, optional): Custom header widget that receives the set of selected muscles
 
 ### `InteractiveBodySvg`
 
 The core widget for displaying the interactive body diagram.
 
 **Properties:**
-- `asset` (String?, optional): Custom asset path. If not provided, automatically uses package assets based on [isFront]. **Note:** Custom SVG files are not supported - only package assets work correctly.
-- `isFront` (bool, default: true): Whether to show front view. Used when [asset] is not provided to automatically select the correct package asset.
+- `isFront` (bool, default: true): Whether to show front view. Automatically uses the correct package asset based on this parameter.
 - `selectedMuscles` (Set<Muscle>?, optional): Currently selected muscles (multi-select)
-- `onMuscleTap` (Function(Muscle)?, optional): Callback when a muscle is tapped
+- `disabledMuscles` (Set<Muscle>?, optional): Disabled muscles (locked/injured/unavailable) - shown greyed out
+- `onMuscleTap` (void Function(Muscle)?, optional): Callback when a muscle is tapped
 - `highlightColor` (Color?, optional): Color for highlighting selected muscles (default: Colors.blue with opacity)
-- `baseColor` (Color?, optional): Base color for unselected muscles (default: Colors.white)
+- `disabledColor` (Color?, optional): Color for disabled muscles (default: Colors.grey)
 - `selectedStrokeWidth` (double, default: 2.0): Stroke width for selected muscles
 - `unselectedStrokeWidth` (double, default: 1.0): Stroke width for unselected muscles
 - `enableSelection` (bool, default: true): Enable/disable tap selection
 - `fit` (BoxFit, default: BoxFit.contain): How to fit the SVG
-- `hitTestPadding` (double, default: 10.0): Padding for hit-testing
+- `hitTestPadding` (double, default: 2.0): Padding for hit-testing
 - `width` (double?, optional): Fixed width
 - `height` (double?, optional): Fixed height
 - `alignment` (Alignment, default: Alignment.center): Alignment of SVG
-- `onMuscleTapDisabled` (Function(Muscle)?, optional): Callback when muscle is tapped but selection is disabled
+- `onMuscleTapDisabled` (void Function(Muscle)?, optional): Callback when muscle is tapped but selection is disabled
+- `onMuscleLongPress` (void Function(Muscle)?, optional): Callback when a muscle is long-pressed
 
 ### `BodyMapController`
 
@@ -654,9 +637,8 @@ void dispose() {
 
 ```dart
 // ❌ WRONG - Custom SVG files are not supported
-InteractiveBodySvg(
-  asset: 'assets/my_custom_body.svg', // Won't work correctly!
-)
+// The asset parameter has been removed in version 1.2.0
+// The widget now always uses package assets based on isFront parameter
 ```
 
 ### ✅ Do: Use the package's included assets
@@ -665,11 +647,6 @@ InteractiveBodySvg(
 // ✅ CORRECT - Simplest way (automatically uses package assets)
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
-)
-
-// ✅ CORRECT - Or specify asset path explicitly
-InteractiveBodySvg(
-  asset: 'packages/flutter_body_part_selector/assets/svg/body_front.svg',
 )
 
 // ✅ CORRECT - Or use InteractiveBodyWidget which uses defaults automatically
