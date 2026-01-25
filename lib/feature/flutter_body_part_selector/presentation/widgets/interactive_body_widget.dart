@@ -1,86 +1,30 @@
 import 'package:flutter/material.dart';
-import '../core/models/muscle.dart';
-import '../features/body_map/body_map_controller.dart';
-import '../features/body_map/widgets/interactive_body_svg.dart';
+import 'package:flutter_body_part_selector/feature/flutter_body_part_selector/domain/entities/muscle.dart';
+import 'package:flutter_body_part_selector/feature/flutter_body_part_selector/presentation/controllers/body_map_controller.dart';
+import 'package:flutter_body_part_selector/feature/flutter_body_part_selector/presentation/widgets/interactive_body_svg.dart';
 
-/// A complete interactive body selector widget with built-in controller.
-/// 
-/// This widget provides a ready-to-use body selector with front/back view
-/// toggle and muscle selection capabilities. The package includes default
-/// SVG assets, so you can use it without specifying asset paths.
-/// 
-/// Example (simplest usage):
-/// ```dart
-/// InteractiveBodyWidget(
-///   onMuscleSelected: (muscle) {
-///     print('Selected: $muscle');
-///   },
-/// )
-/// ```
 class InteractiveBodyWidget extends StatefulWidget {
-  /// Asset path for the front body SVG
-  /// Defaults to the package's included front body SVG
+
   final String? frontAsset;
-
-  /// Asset path for the back body SVG
-  /// Defaults to the package's included back body SVG
   final String? backAsset;
-
-  /// Callback when a muscle is selected
   final Function(Muscle)? onMuscleSelected;
-
-  /// Callback when selection is cleared
   final VoidCallback? onSelectionCleared;
-
-  /// Currently selected muscles (for programmatic control) - multi-select only
   final Set<Muscle>? selectedMuscles;
-
-  /// Initial view (front or back)
   final bool initialIsFront;
-
-  /// Color to highlight selected muscles
   final Color? highlightColor;
-
-  /// Base color for unselected muscles
   final Color? baseColor;
-
-  /// Stroke width for selected muscles
   final double selectedStrokeWidth;
-
-  /// Stroke width for unselected muscles
   final double unselectedStrokeWidth;
-
-  /// Whether selection is enabled
   final bool enableSelection;
-
-  /// How the SVG should be fitted
   final BoxFit fit;
-
-  /// Padding for hit-testing
   final double hitTestPadding;
-
-  /// Width of the widget
   final double? width;
-
-  /// Height of the widget
   final double? height;
-
-  /// Alignment of the SVG
   final Alignment alignment;
-
-  /// Show flip button in app bar
   final bool showFlipButton;
-
-  /// Show clear button in app bar
   final bool showClearButton;
-
-  /// Custom app bar
   final PreferredSizeWidget? appBar;
-
-  /// Background color
   final Color? backgroundColor;
-
-  /// Custom header widget to show selected muscles
   final Widget Function(Set<Muscle>)? selectedMusclesHeader;
 
   const InteractiveBodyWidget({
@@ -118,11 +62,13 @@ class _InteractiveBodyWidgetState extends State<InteractiveBodyWidget> {
   @override
   void initState() {
     super.initState();
-    // Use constructor with initial state for better performance
+    // Create the controller with initial state
+    // This is more efficient than setting it after creation
     _controller = BodyMapController(
       initialSelectedMuscles: widget.selectedMuscles,
       initialIsFront: widget.initialIsFront,
     );
+    // Listen for changes so we can call callbacks when selection changes
     _controller.addListener(_onControllerChanged);
   }
 
@@ -147,7 +93,6 @@ class _InteractiveBodyWidgetState extends State<InteractiveBodyWidget> {
 
   void _onControllerChanged() {
     if (_controller.selectedMuscles.isNotEmpty) {
-      // Call callback for each selected muscle (or just the first one for backward compatibility)
       if (widget.onMuscleSelected != null) {
         for (final muscle in _controller.selectedMuscles) {
           widget.onMuscleSelected!.call(muscle);
@@ -212,10 +157,9 @@ class _InteractiveBodyWidgetState extends State<InteractiveBodyWidget> {
                         asset: _controller.isFront
                             ? (widget.frontAsset ?? 'packages/flutter_body_part_selector/assets/svg/body_front.svg')
                             : (widget.backAsset ?? 'packages/flutter_body_part_selector/assets/svg/body_back.svg'),
-                    selectedMuscles: _controller.selectedMuscles,
-                    onMuscleTap: _controller.selectMuscle,
+                    selectedMuscles: _controller.selectedMuscles.toSet(),
+                    onMuscleTap: (muscle) => _controller.selectMuscle(muscle),
                     highlightColor: widget.highlightColor,
-                    baseColor: widget.baseColor,
                     selectedStrokeWidth: widget.selectedStrokeWidth,
                     unselectedStrokeWidth: widget.unselectedStrokeWidth,
                     enableSelection: widget.enableSelection,

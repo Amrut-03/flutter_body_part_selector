@@ -1,6 +1,5 @@
-import '../models/muscle.dart';
+import '../../feature/flutter_body_part_selector/domain/entities/muscle.dart';
 
-/// Maps SVG element IDs to Muscle enum values
 const Map<String, Muscle> svgIdToMuscle = {
   // Front view
   'traps_left': Muscle.trapsLeft,
@@ -10,14 +9,10 @@ const Map<String, Muscle> svgIdToMuscle = {
   'chest_left': Muscle.chestLeft,
   'chest_right': Muscle.chestRight,
   'abs': Muscle.abs,
-  'lats_front_left': Muscle.latsFrontLeft,
-  'lats_front_right': Muscle.latsFrontRight,
   'triceps_left': Muscle.tricepsLeft,
   'triceps_right': Muscle.tricepsRight,
   'biceps_left': Muscle.bicepsLeft,
   'biceps_right': Muscle.bicepsRight,
-  'biceps_brachialis_left': Muscle.bicepsBrachialisLeft,
-  'biceps_brachialis_right': Muscle.bicepsBrachialisRight,
   'forearms_left': Muscle.forearmsLeft,
   'forearms_right': Muscle.forearmsRight,
   'quads_left': Muscle.quadsLeft,
@@ -25,8 +20,8 @@ const Map<String, Muscle> svgIdToMuscle = {
   'calves_left': Muscle.calvesLeft,
   'calves_right': Muscle.calvesRight,
   // Back view
-  'lats_back_left': Muscle.latsBackLeft,
-  'lats_back_right': Muscle.latsBackRight,
+  'lats_left': Muscle.latsBackLeft,
+  'lats_right': Muscle.latsBackRight,
   'lowerlats_back_left': Muscle.lowerLatsBackLeft,
   'lowerlats_back_right': Muscle.lowerLatsBackRight,
   'glutes_left': Muscle.glutesLeft,
@@ -35,7 +30,6 @@ const Map<String, Muscle> svgIdToMuscle = {
   'hamstrings_right': Muscle.hamstringsRight,
 };
 
-/// Reverse mapping from Muscle to SVG ID
 const Map<Muscle, String> muscleToSvgId = {
   Muscle.trapsLeft: 'traps_left',
   Muscle.trapsRight: 'traps_right',
@@ -44,22 +38,18 @@ const Map<Muscle, String> muscleToSvgId = {
   Muscle.chestLeft: 'chest_left',
   Muscle.chestRight: 'chest_right',
   Muscle.abs: 'abs',
-  Muscle.latsFrontLeft: 'lats_front_left',
-  Muscle.latsFrontRight: 'lats_front_right',
   Muscle.tricepsLeft: 'triceps_left',
   Muscle.tricepsRight: 'triceps_right',
   Muscle.bicepsLeft: 'biceps_left',
   Muscle.bicepsRight: 'biceps_right',
-  Muscle.bicepsBrachialisLeft: 'biceps_brachialis_left',
-  Muscle.bicepsBrachialisRight: 'biceps_brachialis_right',
   Muscle.forearmsLeft: 'forearms_left',
   Muscle.forearmsRight: 'forearms_right',
   Muscle.quadsLeft: 'quads_left',
   Muscle.quadsRight: 'quads_right',
   Muscle.calvesLeft: 'calves_left',
   Muscle.calvesRight: 'calves_right',
-  Muscle.latsBackLeft: 'lats_back_left',
-  Muscle.latsBackRight: 'lats_back_right',
+  Muscle.latsBackLeft: 'lats_left',
+  Muscle.latsBackRight: 'lats_right',
   Muscle.lowerLatsBackLeft: 'lowerlats_back_left',
   Muscle.lowerLatsBackRight: 'lowerlats_back_right',
   Muscle.glutesLeft: 'glutes_left',

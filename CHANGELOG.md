@@ -1,3 +1,11 @@
+## 1.2.0
+
+* **BREAKING**: Removed `asset` parameter from `InteractiveBodySvg` - widget now always uses package assets based on `isFront` parameter
+* **IMPROVED**: Simplified API - no need to specify asset paths, widget automatically uses correct package assets
+* **IMPROVED**: Better code organization with clean architecture structure
+* **IMPROVED**: Enhanced developer-friendly comments throughout the codebase
+* **IMPROVED**: Optimized SVG processing and hit testing performance
+
 ## 1.1.5
 
 * **FIXED**: Shortened package description to meet pub.dev requirements (60-180 characters)
