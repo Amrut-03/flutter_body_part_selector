@@ -1,6 +1,4 @@
-/// Enum representing all available muscles in the body diagram
-/// 
-/// Each muscle has a stable string ID for consistent identification
+/// This is the core business entity that represents a muscle
 enum Muscle {
   // Front body
   trapsLeft,
