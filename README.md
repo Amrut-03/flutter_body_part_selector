@@ -22,7 +22,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_body_part_selector: ^1.1.5
+  flutter_body_part_selector: ^1.2.1
 ```
 
 Then run:
@@ -33,37 +33,9 @@ flutter pub get
 
 ## Usage
 
-### Quick Start (Recommended)
+### Quick Start
 
-The easiest way to use this package is with the `InteractiveBodyWidget`:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:flutter_body_part_selector/flutter_body_part_selector.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: InteractiveBodyWidget(
-        onMuscleSelected: (muscle) {
-          print('Selected muscle: $muscle');
-        },
-      ),
-    );
-  }
-}
-```
-
-### Advanced Usage
-
-For more control, use `InteractiveBodySvg` with `BodyMapController`:
+Use `InteractiveBodySvg` with `BodyMapController`:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -373,28 +345,6 @@ InteractiveBodySvg(
 )
 ```
 
-#### Using InteractiveBodyWidget
-
-The `InteractiveBodyWidget` provides a complete solution with built-in UI:
-
-```dart
-InteractiveBodyWidget(
-  onMuscleSelected: (muscle) {
-    print('Selected: $muscle');
-  },
-  highlightColor: Colors.blue,
-  showFlipButton: true, // Show flip button in app bar
-  showClearButton: true, // Show clear button in app bar
-  backgroundColor: Colors.black, // Background color
-  selectedMusclesHeader: (muscles) {
-    // Custom header widget - receives Set<Muscle>
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Text('Selected: ${muscles.length} muscles'),
-    );
-  },
-)
-```
 
 ## Available Muscles
 
@@ -428,18 +378,7 @@ The package assets are pre-configured with the correct muscle IDs and mappings. 
 
 ### Using Package Assets
 
-The package includes default SVG assets that are **automatically used** by `InteractiveBodyWidget`. You don't need to specify asset paths:
-
-```dart
-// Simplest usage - assets are included automatically
-InteractiveBodyWidget(
-  onMuscleSelected: (muscle) {
-    print('Selected: $muscle');
-  },
-)
-```
-
-For `InteractiveBodySvg`, simply use the `isFront` parameter:
+The package includes default SVG assets that are **automatically used**. Simply use the `isFront` parameter:
 
 ```dart
 InteractiveBodySvg(
@@ -453,6 +392,7 @@ InteractiveBodySvg(
 
 ## API Reference
 
+<<<<<<< HEAD
 ### `InteractiveBodyWidget`
 
 A complete widget with built-in controller and UI. Perfect for quick integration.
@@ -477,6 +417,8 @@ A complete widget with built-in controller and UI. Perfect for quick integration
 - `backgroundColor` (Color?, optional): Background color
 - `selectedMusclesHeader` (Widget Function(Set<Muscle>)?, optional): Custom header widget that receives the set of selected muscles
 
+=======
+>>>>>>> 31cf2a3 (Release v1.2.1: Remove InteractiveBodyWidget, add comprehensive dartdoc comments, clean up code)
 ### `InteractiveBodySvg`
 
 The core widget for displaying the interactive body diagram.
@@ -644,13 +586,10 @@ void dispose() {
 ### ✅ Do: Use the package's included assets
 
 ```dart
-// ✅ CORRECT - Simplest way (automatically uses package assets)
+// ✅ CORRECT - Automatically uses package assets
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
 )
-
-// ✅ CORRECT - Or use InteractiveBodyWidget which uses defaults automatically
-InteractiveBodyWidget(...)
 ```
 
 ## Contributing

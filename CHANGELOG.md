@@ -1,3 +1,11 @@
+## 1.2.1
+
+* **BREAKING**: Removed `InteractiveBodyWidget` - package now provides only `InteractiveBodySvg` widget without Scaffold/AppBar
+* **IMPROVED**: Simplified package API - single widget (`InteractiveBodySvg`) for better flexibility
+* **IMPROVED**: Users can now integrate the widget into their own UI without built-in Scaffold/AppBar constraints
+* **IMPROVED**: Cleaned up all debug code and unnecessary comments for production-ready codebase
+* **IMPROVED**: Updated documentation to reflect single widget architecture
+
 ## 1.2.0
 
 * **BREAKING**: Removed `asset` parameter from `InteractiveBodySvg` - widget now always uses package assets based on `isFront` parameter

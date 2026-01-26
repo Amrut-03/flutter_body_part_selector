@@ -19,3 +19,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  # Assets from the package are automatically available via packages/ prefix
+  # No need to declare them here when using path dependency

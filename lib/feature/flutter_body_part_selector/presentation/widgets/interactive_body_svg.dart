@@ -9,8 +9,24 @@ import '../../data/datasources/svg_asset_datasource.dart';
 import '../../../../core/constants/svg_helpers.dart';
 import '../../../../core/utils/svg_utils.dart';
 
+/// A widget that displays an interactive SVG body diagram.
+///
+/// This widget allows users to tap on muscles to select them, with visual
+/// highlighting of selected muscles. The widget automatically uses the package's
+/// built-in SVG assets based on the [isFront] parameter.
+///
+/// Example:
+/// ```dart
+/// InteractiveBodySvg(
+///   isFront: true,
+///   selectedMuscles: {Muscle.bicepsLeft, Muscle.tricepsRight},
+///   onMuscleTap: (muscle) {
+///     print('Selected: $muscle');
+///   },
+///   highlightColor: Colors.blue,
+/// )
+/// ```
 class InteractiveBodySvg extends StatefulWidget {
-  
   final String? asset;
   final bool isFront;
   final Set<Muscle>? selectedMuscles;
@@ -81,6 +97,7 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   bool _isLoading = true;
   bool _isProcessing = false;
   bool _isWidgetReady = false;
+  String? _loadError;
 
   Map<String, Rect>? _muscleBounds;
   Map<String, List<Rect>>? _groupPathBounds;
@@ -101,6 +118,7 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   @override
   void initState() {
     super.initState();
+    _loadError = null;
     _loadAndModifySvg();
     _scheduleWidgetReady();
   }
@@ -152,9 +170,46 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
     try {
       if (!mounted) return;
 
-      final effectiveAsset = widget._effectiveAsset;
-      final svgString = await rootBundle.loadString(effectiveAsset);
+      await Future.delayed(Duration.zero);
+      if (!mounted) return;
 
+      final dataSource = SvgAssetDataSource();
+      final effectiveAsset = widget._effectiveAsset;
+      final List<String> assetPathsToTry = [
+        effectiveAsset,
+        dataSource.getAssetPathDirect(widget.isFront),
+      ];
+      
+      Exception? lastException;
+      String? svgString;
+      
+      for (final assetPath in assetPathsToTry) {
+        try {
+          try {
+            svgString = await rootBundle.loadString(assetPath);
+            break;
+          } catch (e) {
+            if (mounted) {
+              try {
+                final assetBundle = DefaultAssetBundle.of(context);
+                svgString = await assetBundle.loadString(assetPath);
+                break;
+              } catch (e2) {
+                lastException = e2 is Exception ? e2 : Exception(e2.toString());
+              }
+            } else {
+              lastException = e is Exception ? e : Exception(e.toString());
+            }
+          }
+        } catch (e) {
+          lastException = e is Exception ? e : Exception(e.toString());
+        }
+      }
+      
+      if (svgString == null) {
+        throw lastException ?? Exception('Failed to load SVG asset from any path');
+      }
+      
       final document = XmlDocument.parse(svgString);
       _extractSvgMetadata(document);
 
@@ -162,7 +217,7 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
       final svgIds = _getSvgIds();
 
       if (_shouldExtractBounds(effectiveAsset)) {
-        _extractMuscleBounds(document);
+        _muscleBounds = _extractMuscleBounds(document);
       }
 
       _processSvgElements(document, svgIds, colorConfig);
@@ -171,14 +226,12 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
 
       final finalSvg = document.toXmlString(pretty: false);
       _updateSvgState(finalSvg, document);
-      _scheduleWidgetReady();
     } catch (e) {
-      assert(() {
-        debugPrint('Error loading SVG: $e');
-        return true;
-      }());
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _loadError ??= e.toString();
+        });
       }
     } finally {
       _isProcessing = false;
@@ -188,13 +241,13 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   void _extractSvgMetadata(XmlDocument document) {
     final svgElement = document.findAllElements('svg').firstOrNull;
     final viewBox = svgElement?.getAttribute('viewBox');
-    if (viewBox != null) {
-      final values = viewBox.split(' ').map(double.parse).toList();
-      if (values.length >= 4) {
-        _viewBoxOffset = Offset(values[0], values[1]);
-        _svgSize = Size(values[2], values[3]);
+      if (viewBox != null) {
+        final values = viewBox.split(' ').map(double.parse).toList();
+        if (values.length >= 4) {
+          _viewBoxOffset = Offset(values[0], values[1]);
+          _svgSize = Size(values[2], values[3]);
+        }
       }
-    }
   }
 
   bool _shouldExtractBounds(String effectiveAsset) {
@@ -230,19 +283,19 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   }
 
   void _updateSvgState(String finalSvg, XmlDocument document) {
+    _ensureBoundsReady(document);
+    
     setState(() {
       _modifiedSvg = finalSvg;
       _isLoading = false;
-      _ensureBoundsReady(document);
+      _isWidgetReady = true;
     });
   }
 
   void _ensureBoundsReady(XmlDocument document) {
-    if (_muscleBounds == null || _svgSize == null) {
-      _extractMuscleBounds(document);
-      if (_svgSize == null) {
-        _extractSvgMetadata(document);
-      }
+    _muscleBounds ??= _extractMuscleBounds(document);
+    if (_svgSize == null) {
+      _extractSvgMetadata(document);
     }
   }
 
@@ -728,19 +781,82 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   }
 
   Widget _buildSvgWidget() {
+    if (_loadError != null && !_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            const Text('Failed to load SVG', style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                _loadError!,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     if (_isLoading ||
         _modifiedSvg == null ||
-        _muscleBounds == null ||
         _svgSize == null ||
         !_isWidgetReady) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (!_modifiedSvg!.trim().startsWith('<svg')) {
+      return const Center(
+        child: Text('Invalid SVG format', style: TextStyle(color: Colors.red)),
+      );
+    }
+    
     return RepaintBoundary(
-      child: SvgPicture.string(
-        _modifiedSvg!,
-        fit: widget.fit,
-        alignment: widget.alignment,
+      child: Builder(
+        builder: (context) {
+          try {
+            try {
+              XmlDocument.parse(_modifiedSvg!);
+            } catch (parseError) {
+              return Center(
+                child: Text('Invalid SVG XML: $parseError', style: const TextStyle(color: Colors.red)),
+              );
+            }
+            
+            return SvgPicture.string(
+              _modifiedSvg!,
+              fit: widget.fit,
+              alignment: widget.alignment,
+              width: widget.width,
+              height: widget.height,
+            );
+          } catch (e) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  const Text('SVG Rendering Error', style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      e.toString(),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
