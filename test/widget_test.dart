@@ -9,20 +9,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_body_part_selector/flutter_body_part_selector.dart';
 
 void main() {
-  testWidgets('InteractiveBodyWidget smoke test', (WidgetTester tester) async {
+  testWidgets('InteractiveBodySvg smoke test', (WidgetTester tester) async {
+    final controller = BodyMapController();
     // Build the widget
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: InteractiveBodyWidget(
-            // Asset paths are optional - package includes default assets
+          body: InteractiveBodySvg(
+            isFront: controller.isFront,
+            selectedMuscles: controller.selectedMuscles,
+            onMuscleTap: controller.selectMuscle,
           ),
         ),
       ),
     );
 
     // Verify that the widget is rendered
-    expect(find.byType(InteractiveBodyWidget), findsOneWidget);
+    expect(find.byType(InteractiveBodySvg), findsOneWidget);
+    controller.dispose();
   });
 
   testWidgets('BodyMapController test', (WidgetTester tester) async {

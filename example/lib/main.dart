@@ -40,6 +40,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Body Part Selector'),
         actions: [

@@ -73,6 +73,7 @@ class ElementState {
   String strokeColor(ColorConfig config) {
     if (isSelected) return config.highlightHex;
     if (isDisabled) return config.disabledHex;
+    if (isBodyOutline) return '#E0E0E0';
     return 'none';
   }
 
