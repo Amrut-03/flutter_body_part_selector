@@ -1,0 +1,8 @@
+
+# Flutter platform runners are generated code; keep repo language as Dart
+windows/** linguist-vendored
+linux/** linguist-vendored
+macos/** linguist-vendored
+ios/** linguist-vendored
+android/** linguist-vendored
+web/** linguist-vendored
