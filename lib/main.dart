@@ -29,94 +29,55 @@ class BodyPartSelectorScreen extends StatefulWidget {
   State<BodyPartSelectorScreen> createState() => _BodyPartSelectorScreenState();
 }
 
+/// Human-readable label, e.g. `Muscle.latsBackLeft` -> "Lats Back Left".
+String _muscleLabel(Muscle muscle) {
+  final name = muscle.displayName;
+  return name.isEmpty ? name : name[0].toUpperCase() + name.substring(1);
+}
+
 class _BodyPartSelectorScreenState extends State<BodyPartSelectorScreen> {
-  late BodyMapController _controller;
-  Set<Muscle> get _selectedMuscles => _controller.selectedMuscles;
-  Set<Muscle> get _disabledMuscles => _controller.disabledMuscles;
+  final BodyMapController _controller = BodyMapController();
 
-  // Customization options
+  // Customization options (fixed for this demo; change here to try other props)
   final Color _highlightColor = Colors.blue;
-  final Color _baseColor = Colors.white;
-  Color _disabledColor = Colors.grey;
-  double _selectedStrokeWidth = 2.5;
-  double _unselectedStrokeWidth = 1.0;
-  double _hitTestPadding = 10.0;
-  PerformanceMode _performanceMode = PerformanceMode.balanced;
-  BoxFit _boxFit = BoxFit.contain;
-  bool _enableSelection = true;
-  bool _showTooltips = true;
-  bool _showAnimations = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = BodyMapController();
-    _controller.addListener(_onControllerChanged);
-  }
+  final Color _disabledColor = Colors.grey;
+  final double _selectedStrokeWidth = 2.5;
+  final double _unselectedStrokeWidth = 1.0;
+  final double _hitTestPadding = 10.0;
+  final BoxFit _boxFit = BoxFit.contain;
+  final bool _enableSelection = true;
+  final bool _showTooltips = true;
+  final bool _showAnimations = true;
 
   @override
   void dispose() {
-    _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
   }
 
-  void _onControllerChanged() {
-    setState(() {});
-  }
-
-  void _toggleMuscle(Muscle muscle) {
-    if (_disabledMuscles.contains(muscle)) return;
-    if (_selectedMuscles.contains(muscle)) {
-      // Deselect: save current selection, clear all, then reselect all except this one
-      final musclesToKeep = _selectedMuscles.where((m) => m != muscle).toSet();
-      _controller.clearSelection();
-      // Reselect all muscles except the one being deselected
-      for (var m in musclesToKeep) {
-        _controller.selectMuscle(m);
-      }
-    } else {
-      // Select
-      _controller.selectMuscle(muscle);
-    }
-  }
-
   void _toggleDisabledMuscle(Muscle muscle) {
-    if (_disabledMuscles.contains(muscle)) {
+    if (_controller.isDisabled(muscle)) {
       _controller.enableMuscle(muscle);
     } else {
+      // disableMuscle() also removes the muscle from the selection.
       _controller.disableMuscle(muscle);
-      if (_selectedMuscles.contains(muscle)) {
-        final musclesToKeep = _selectedMuscles.where((m) => m != muscle).toSet();
-        _controller.clearSelection();
-        for (var m in musclesToKeep) {
-          _controller.selectMuscle(m);
-        }
-      }
     }
   }
 
-  void _clearAll() {
-    _controller.clearSelection();
+  void _onMuscleLongPress(Muscle muscle) {
+    final wasDisabled = _controller.isDisabled(muscle);
+    _toggleDisabledMuscle(muscle);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${_muscleLabel(muscle)} ${wasDisabled ? 'enabled' : 'disabled'}'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
-  void _toggleView() {
-    _controller.toggleView();
-  }
-
-  void _setFrontView() {
-    _controller.setFrontView();
-  }
-
-  void _setBackView() {
-    _controller.setBackView();
-  }
-
-  static String _getMuscleName(Muscle muscle) {
-    return muscle.toString().split('.').last.replaceAllMapped(
-      RegExp(r'([A-Z])'),
-      (match) => ' ${match.group(1)}',
-    ).trim();
+  void _selectAll() {
+    // Single notification; disabled and already-selected muscles are skipped.
+    _controller.selectMultiple(Muscle.values.toSet());
   }
 
   @override
@@ -128,115 +89,70 @@ class _BodyPartSelectorScreenState extends State<BodyPartSelectorScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.clear_all),
-            onPressed: _clearAll,
+            onPressed: _controller.clearSelection,
             tooltip: 'Clear All Selections',
           ),
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _ViewToggleBar(
-              isFront: _controller.isFront,
-              onFrontPressed: _setFrontView,
-              onTogglePressed: _toggleView,
-              onBackPressed: _setBackView,
-            ),
+        // Only the body depends on controller state; the app bar and FAB
+        // are not rebuilt on selection changes.
+        child: ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) {
+            // Read each (copied, unmodifiable) set once per build.
+            final selected = _controller.selectedMuscles;
+            final disabled = _controller.disabledMuscles;
+            final isFront = _controller.isFront;
 
-            // Body Map Selector with all features
-            Expanded(
-              flex: 3,
-              child: Container(
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            return Column(
+              children: [
+                _ViewToggleBar(
+                  isFront: isFront,
+                  onFrontPressed: _controller.setFrontView,
+                  onTogglePressed: _controller.toggleView,
+                  onBackPressed: _controller.setBackView,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: InteractiveBodySvg(
-                    isFront: _controller.isFront,
-                    selectedMuscles: _selectedMuscles,
-                    disabledMuscles: _disabledMuscles,
-                    onMuscleTap: _enableSelection ? (muscle) {
-                      _toggleMuscle(muscle);
-                    } : null,
-                    onMuscleLongPress: (muscle) {
-                      // Long press to disable/enable muscle
-                      final wasDisabled = _controller.isDisabled(muscle);
-                      _toggleDisabledMuscle(muscle);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            !wasDisabled
-                                ? '${_getMuscleName(muscle)} disabled'
-                                : '${_getMuscleName(muscle)} enabled',
-                          ),
-                          duration: const Duration(seconds: 1),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      );
-                    },
-                    highlightColor: _highlightColor.withValues(alpha: 0.6),
-                    baseColor: _baseColor,
-                    disabledColor: _disabledColor,
-                    selectedStrokeWidth: _selectedStrokeWidth,
-                    unselectedStrokeWidth: _unselectedStrokeWidth,
-                    enableSelection: _enableSelection,
-                    fit: _boxFit,
-                    hitTestPadding: _hitTestPadding,
-                    performanceMode: _performanceMode,
-                    tooltipBuilder: _showTooltips ? (muscle) => _getMuscleName(muscle) : null,
-                    semanticLabelBuilder: (muscle) => '${_getMuscleName(muscle)} muscle',
-                    onSelectAnimationBuilder: _showAnimations
-                        ? (context, child, muscle) {
-                            return TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              builder: (context, value, child) {
-                                return Opacity(
-                                  opacity: value,
-                                  child: Transform.scale(
-                                    scale: 0.9 + (0.1 * value),
-                                    child: child!,
-                                  ),
-                                );
-                              },
-                              child: child,
-                            );
-                          }
-                        : null,
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _buildBodyMap(isFront, selected, disabled),
+                    ),
                   ),
                 ),
-              ),
-            ),
-
-            _SelectionInfoBar(
-              selectedCount: _selectedMuscles.length,
-              disabledCount: _disabledMuscles.length,
-              disabledColor: _disabledColor,
-              isFront: _controller.isFront,
-            ),
-
-            Expanded(
-              flex: 2,
-              child: _MuscleTabSection(
-                selectedMuscles: _selectedMuscles,
-                disabledMuscles: _disabledMuscles,
-                disabledColor: _disabledColor,
-                onDisable: _toggleDisabledMuscle,
-                onDeselect: _toggleMuscle,
-                getMuscleName: _getMuscleName,
-              ),
-            ),
-          ],
+                _SelectionInfoBar(
+                  selectedCount: selected.length,
+                  disabledCount: disabled.length,
+                  disabledColor: _disabledColor,
+                  isFront: isFront,
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _MuscleTabSection(
+                    selectedMuscles: selected.toList(growable: false),
+                    disabledMuscles: disabled.toList(growable: false),
+                    disabledColor: _disabledColor,
+                    onDisable: _toggleDisabledMuscle,
+                    onDeselect: _controller.deselectMuscle,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -248,15 +164,43 @@ class _BodyPartSelectorScreenState extends State<BodyPartSelectorScreen> {
     );
   }
 
-  void _selectAll() {
-    _controller.removeListener(_onControllerChanged);
-    for (var muscle in Muscle.values) {
-      if (!_selectedMuscles.contains(muscle) && !_disabledMuscles.contains(muscle)) {
-        _controller.selectMuscle(muscle);
-      }
-    }
-    _controller.addListener(_onControllerChanged);
-    _onControllerChanged();
+  Widget _buildBodyMap(bool isFront, Set<Muscle> selected, Set<Muscle> disabled) {
+    return InteractiveBodySvg(
+      isFront: isFront,
+      selectedMuscles: selected,
+      disabledMuscles: disabled,
+      // Disabled taps are already filtered by the widget and the controller.
+      onMuscleTap: _enableSelection ? _controller.toggleMuscle : null,
+      onMuscleLongPress: _onMuscleLongPress,
+      highlightColor: _highlightColor.withValues(alpha: 0.6),
+      disabledColor: _disabledColor,
+      selectedStrokeWidth: _selectedStrokeWidth,
+      unselectedStrokeWidth: _unselectedStrokeWidth,
+      enableSelection: _enableSelection,
+      fit: _boxFit,
+      hitTestPadding: _hitTestPadding,
+      tooltipBuilder: _showTooltips ? _muscleLabel : null,
+      semanticLabelBuilder: (muscle) => '${_muscleLabel(muscle)} muscle',
+      onSelectAnimationBuilder: _showAnimations
+          ? (context, child, muscle) {
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.scale(
+                      scale: 0.9 + (0.1 * value),
+                      child: child!,
+                    ),
+                  );
+                },
+                child: child,
+              );
+            }
+          : null,
+    );
   }
 }
 
@@ -379,12 +323,11 @@ class _SelectionInfoBar extends StatelessWidget {
 }
 
 class _MuscleTabSection extends StatelessWidget {
-  final Set<Muscle> selectedMuscles;
-  final Set<Muscle> disabledMuscles;
+  final List<Muscle> selectedMuscles;
+  final List<Muscle> disabledMuscles;
   final Color disabledColor;
   final void Function(Muscle) onDisable;
   final void Function(Muscle) onDeselect;
-  final String Function(Muscle) getMuscleName;
 
   const _MuscleTabSection({
     required this.selectedMuscles,
@@ -392,7 +335,6 @@ class _MuscleTabSection extends StatelessWidget {
     required this.disabledColor,
     required this.onDisable,
     required this.onDeselect,
-    required this.getMuscleName,
   });
 
   @override
@@ -438,7 +380,7 @@ class _MuscleTabSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: selectedMuscles.length,
       itemBuilder: (context, index) {
-        final muscle = selectedMuscles.elementAt(index);
+        final muscle = selectedMuscles[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
@@ -450,7 +392,7 @@ class _MuscleTabSection extends StatelessWidget {
               ),
             ),
             title: Text(
-              getMuscleName(muscle),
+              _muscleLabel(muscle),
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
             trailing: Row(
@@ -485,7 +427,7 @@ class _MuscleTabSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: disabledMuscles.length,
       itemBuilder: (context, index) {
-        final muscle = disabledMuscles.elementAt(index);
+        final muscle = disabledMuscles[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           color: disabledColor.withValues(alpha: 0.1),
@@ -498,7 +440,7 @@ class _MuscleTabSection extends StatelessWidget {
               ),
             ),
             title: Text(
-              getMuscleName(muscle),
+              _muscleLabel(muscle),
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 color: disabledColor,

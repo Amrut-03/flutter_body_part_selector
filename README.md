@@ -17,8 +17,22 @@ An interactive body part / muscle selector demo app built with the [`flutter_bod
 lib/
   main.dart          # App shell, screen, controller wiring, extracted widget classes
 test/
-  widget_test.dart   # Smoke test verifying initial UI renders
+  body_map_controller_test.dart  # Unit tests pinning the controller behaviour the app relies on
+  widget_test.dart               # Widget tests: select all, clear, deselect, disable/enable, view switching
 ```
+
+Uses `flutter_body_part_selector` **^1.2.1**.
+
+## Versioning
+
+This demo app and the `flutter_body_part_selector` package are versioned **independently**:
+
+| | Version | Where it's set | What it tracks |
+|---|---|---|---|
+| Demo app (`body_selector_app`) | 2.0.0 | `pubspec.yaml` → `version`, `CHANGELOG.md` | Changes to this demo |
+| Package (`flutter_body_part_selector`) | 1.2.1 | `pubspec.yaml` → `dependencies`, [pub.dev](https://pub.dev/packages/flutter_body_part_selector/changelog) | The selector widget and controller |
+
+The app's 2.0.0 does not mean it targets a package 2.x. To see the package version actually in use, check `flutter_body_part_selector` in `pubspec.lock`.
 
 The app is a **single-screen demo** with the state class managing a `BodyMapController` instance. UI sections are split into private widget classes for maintainability:
 
@@ -26,13 +40,28 @@ The app is a **single-screen demo** with the state class managing a `BodyMapCont
 - `_SelectionInfoBar` — selected/disabled counts + view indicator
 - `_MuscleTabSection` — tabbed list of selected and disabled muscles (with empty states)
 
-## Known Package Limitations
+## Controller API Used
 
-The `flutter_body_part_selector` package has missing API methods. Workarounds are documented in `AGENTS.md`. Key points:
+The app drives all state through `BodyMapController` (these methods are available since `flutter_body_part_selector` 1.1.3), with no workarounds:
 
-- No `toggleMuscle()` or `deselectMuscle()` — use clear-and-reselect pattern
-- `selectedMuscles` is read-only — use computed getters from controller
-- No initialization constructor — create empty controller and select programmatically
+| Action | Controller call |
+|---|---|
+| Tap a muscle on the map | `toggleMuscle(muscle)` |
+| Deselect from the list | `deselectMuscle(muscle)` |
+| Long-press / disable from the list | `disableMuscle(muscle)` (also removes it from the selection) / `enableMuscle(muscle)` |
+| Select All (FAB) | `selectMultiple(Muscle.values.toSet())` (skips disabled muscles, one notification) |
+| Clear All (app bar) | `clearSelection()` |
+| Front / Back / Toggle | `setFrontView()` / `setBackView()` / `toggleView()` |
+
+The controller also supports `selectedMuscles = {...}` (setter), `setSelectedMuscles`, `setDisabledMuscles`, `isSelected`, `isDisabled`, and an initial-state constructor:
+
+```dart
+BodyMapController(
+  initialSelectedMuscles: {Muscle.bicepsLeft},
+  initialDisabledMuscles: {Muscle.chestLeft},
+  initialIsFront: true,
+);
+```
 
 ## Getting Started
 
