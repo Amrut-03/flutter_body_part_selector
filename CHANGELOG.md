@@ -1,3 +1,14 @@
+## 1.2.2
+
+* **FIXED**: Widget tests no longer hang or fail because of `InteractiveBodySvg`:
+  * Loading no longer leaves a pending `Timer`, which caused "A Timer is still pending even after the widget tree was disposed" when a test ended right after `pumpWidget`.
+  * A load started under the test fake clock no longer poisons the asset bundle cache for later tests in the same file. Loaded SVG text is now cached by the widget only after a successful load.
+* **NEW**: `loadingBuilder` parameter on `InteractiveBodySvg` to replace the default loading spinner, for example with a static placeholder so `pumpAndSettle()` can settle in tests.
+* **DOCS**: Added a Testing section to the README covering `loadingBuilder` and `tester.runAsync`.
+* **DOCS**: Removed unresolved merge-conflict markers and the stale `InteractiveBodyWidget` API reference from the README.
+* **DOCS**: Documented the `asset` parameter, which still exists (see the 1.2.0 correction below).
+* **DOCS**: Corrected the 1.2.0 entry. It omitted three breaking changes and wrongly said `asset` was removed.
+
 ## 1.2.1
 
 * **BREAKING**: Removed `InteractiveBodyWidget` - package now provides only `InteractiveBodySvg` widget without Scaffold/AppBar
@@ -8,7 +19,10 @@
 
 ## 1.2.0
 
-* **BREAKING**: Removed `asset` parameter from `InteractiveBodySvg` - widget now always uses package assets based on `isFront` parameter
+* **BREAKING**: Removed `asset` parameter from `InteractiveBodySvg` - widget now always uses package assets based on `isFront` parameter. *Correction (1.2.2): `asset` was not removed. It is still accepted and overrides the built-in SVG path. When omitted, the package asset for `isFront` is used.*
+* **BREAKING** *(added in 1.2.2, previously undocumented)*: Removed the `baseColor` parameter from `InteractiveBodySvg`. Unselected muscles are now drawn unfilled with a light outline.
+* **BREAKING** *(added in 1.2.2, previously undocumented)*: Removed the `performanceMode` parameter and the `PerformanceMode` enum.
+* **CHANGED** *(added in 1.2.2, previously undocumented)*: The default `hitTestPadding` changed from `10.0` to `2.0`, giving smaller tap targets. Pass `hitTestPadding: 10.0` to restore the old behavior.
 * **IMPROVED**: Simplified API - no need to specify asset paths, widget automatically uses correct package assets
 * **IMPROVED**: Better code organization with clean architecture structure
 * **IMPROVED**: Enhanced developer-friendly comments throughout the codebase

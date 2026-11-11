@@ -21,6 +21,7 @@
 ///   onMuscleTap: controller.selectMuscle,
 /// )
 /// ```
+library;
 
 // Domain layer - entities
 export 'feature/flutter_body_part_selector/domain/entities/muscle.dart';

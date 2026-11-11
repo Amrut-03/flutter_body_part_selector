@@ -77,7 +77,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
                   isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
                   onMuscleTap: controller.selectMuscle,
-                  highlightColor: Colors.blue.withOpacity(0.7),
+                  highlightColor: Colors.blue.withValues(alpha: 0.7),
                 ),
               ),
             ],

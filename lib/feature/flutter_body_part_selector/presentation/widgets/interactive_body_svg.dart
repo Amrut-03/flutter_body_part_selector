@@ -27,6 +27,12 @@ import '../../../../core/utils/svg_utils.dart';
 /// )
 /// ```
 class InteractiveBodySvg extends StatefulWidget {
+  /// Optional path to a custom SVG asset.
+  ///
+  /// When `null` (the default), the package's built-in front or back diagram
+  /// is used based on [isFront]. When set, this asset is loaded instead and
+  /// [isFront] only affects the fallback path. A custom SVG must use the same
+  /// element IDs as the built-in assets for muscle hit-testing to work.
   final String? asset;
   final bool isFront;
   final Set<Muscle>? selectedMuscles;
@@ -49,6 +55,20 @@ class InteractiveBodySvg extends StatefulWidget {
   final String? Function(Muscle muscle)? tooltipBuilder;
   final String? Function(Muscle muscle)? semanticLabelBuilder;
   final bool isInitialSelection;
+
+  /// Builds the widget shown while the SVG asset is loading.
+  ///
+  /// Defaults to a centered [CircularProgressIndicator]. Because that
+  /// indicator animates indefinitely, `WidgetTester.pumpAndSettle()` cannot
+  /// settle while the SVG is loading in widget tests. Pass a static widget
+  /// here in tests to avoid that:
+  ///
+  /// ```dart
+  /// InteractiveBodySvg(
+  ///   loadingBuilder: (context) => const SizedBox.shrink(),
+  /// )
+  /// ```
+  final WidgetBuilder? loadingBuilder;
 
   const InteractiveBodySvg({
     super.key,
@@ -74,6 +94,7 @@ class InteractiveBodySvg extends StatefulWidget {
     this.tooltipBuilder,
     this.semanticLabelBuilder,
     this.isInitialSelection = false,
+    this.loadingBuilder,
   });
 
   String get _effectiveAsset {
@@ -92,6 +113,14 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
   static const double _pathBoundsMargin = 2.0;
   static const double _disabledOpacity = 0.4;
   static const double _hitTestPadding = 1.0;
+
+  /// Raw SVG text per asset path, stored only after a successful load.
+  ///
+  /// Assets are loaded with `cache: false` so the bundle never caches an
+  /// in-flight Future. Under the widget-test fake clock such a Future never
+  /// completes, and a cached copy would hang every later load in the same
+  /// test isolate.
+  static final Map<String, String> _svgCache = {};
 
   String? _modifiedSvg;
   bool _isLoading = true;
@@ -170,7 +199,10 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
     try {
       if (!mounted) return;
 
-      await Future.delayed(Duration.zero);
+      // Defer past initState so DefaultAssetBundle.of(context) is allowed.
+      // A microtask (unlike Future.delayed) leaves no pending Timer, which
+      // would otherwise fail widget tests that end before it fires.
+      await Future<void>.microtask(() {});
       if (!mounted) return;
 
       final dataSource = SvgAssetDataSource();
@@ -184,15 +216,22 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
       String? svgString;
       
       for (final assetPath in assetPathsToTry) {
+        final cached = _svgCache[assetPath];
+        if (cached != null) {
+          svgString = cached;
+          break;
+        }
         try {
           try {
-            svgString = await rootBundle.loadString(assetPath);
+            svgString = await rootBundle.loadString(assetPath, cache: false);
+            _svgCache[assetPath] = svgString;
             break;
           } catch (e) {
             if (mounted) {
               try {
                 final assetBundle = DefaultAssetBundle.of(context);
-                svgString = await assetBundle.loadString(assetPath);
+                svgString = await assetBundle.loadString(assetPath, cache: false);
+                _svgCache[assetPath] = svgString;
                 break;
               } catch (e2) {
                 lastException = e2 is Exception ? e2 : Exception(e2.toString());
@@ -807,7 +846,8 @@ class _InteractiveBodySvgState extends State<InteractiveBodySvg> {
         _modifiedSvg == null ||
         _svgSize == null ||
         !_isWidgetReady) {
-      return const Center(child: CircularProgressIndicator());
+      return widget.loadingBuilder?.call(context) ??
+          const Center(child: CircularProgressIndicator());
     }
 
     if (!_modifiedSvg!.trim().startsWith('<svg')) {

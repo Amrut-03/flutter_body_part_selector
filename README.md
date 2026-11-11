@@ -392,33 +392,6 @@ InteractiveBodySvg(
 
 ## API Reference
 
-<<<<<<< HEAD
-### `InteractiveBodyWidget`
-
-A complete widget with built-in controller and UI. Perfect for quick integration.
-
-**Properties:**
-- `onMuscleSelected` (Function(Muscle)?, optional): Callback when a muscle is selected
-- `onSelectionCleared` (VoidCallback?, optional): Callback when selection is cleared
-- `selectedMuscles` (Set<Muscle>?, optional): Programmatically set selected muscles (multi-select)
-- `initialIsFront` (bool, default: true): Initial view (front or back)
-- `highlightColor` (Color?, optional): Color for highlighting selected muscles
-- `selectedStrokeWidth` (double, default: 2.0): Stroke width for selected muscles
-- `unselectedStrokeWidth` (double, default: 1.0): Stroke width for unselected muscles
-- `enableSelection` (bool, default: true): Enable/disable selection
-- `fit` (BoxFit, default: BoxFit.contain): How to fit the SVG
-- `hitTestPadding` (double, default: 2.0): Padding for hit-testing
-- `width` (double?, optional): Fixed width
-- `height` (double?, optional): Fixed height
-- `alignment` (Alignment, default: Alignment.center): Alignment of SVG
-- `showFlipButton` (bool, default: true): Show flip button in app bar
-- `showClearButton` (bool, default: true): Show clear button in app bar
-- `appBar` (PreferredSizeWidget?, optional): Custom app bar
-- `backgroundColor` (Color?, optional): Background color
-- `selectedMusclesHeader` (Widget Function(Set<Muscle>)?, optional): Custom header widget that receives the set of selected muscles
-
-=======
->>>>>>> 31cf2a3 (Release v1.2.1: Remove InteractiveBodyWidget, add comprehensive dartdoc comments, clean up code)
 ### `InteractiveBodySvg`
 
 The core widget for displaying the interactive body diagram.
@@ -440,6 +413,8 @@ The core widget for displaying the interactive body diagram.
 - `alignment` (Alignment, default: Alignment.center): Alignment of SVG
 - `onMuscleTapDisabled` (void Function(Muscle)?, optional): Callback when muscle is tapped but selection is disabled
 - `onMuscleLongPress` (void Function(Muscle)?, optional): Callback when a muscle is long-pressed
+- `loadingBuilder` (WidgetBuilder?, optional): Widget shown while the SVG loads (default: a centered `CircularProgressIndicator`). See [Testing](#testing).
+- `asset` (String?, optional, advanced): Overrides the built-in SVG path. Not recommended; see [Common Pitfalls](#common-pitfalls).
 
 ### `BodyMapController`
 
@@ -579,9 +554,13 @@ void dispose() {
 
 ```dart
 // ❌ WRONG - Custom SVG files are not supported
-// The asset parameter has been removed in version 1.2.0
-// The widget now always uses package assets based on isFront parameter
+InteractiveBodySvg(
+  asset: 'assets/my_body.svg', // Muscle taps only work if every element ID
+                               // matches the package's built-in SVGs
+)
 ```
+
+The `asset` parameter still exists as an advanced override, but the muscle mappings depend on the exact element IDs in the package's SVGs.
 
 ### ✅ Do: Use the package's included assets
 
@@ -590,6 +569,38 @@ void dispose() {
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
 )
+```
+
+## Testing
+
+`InteractiveBodySvg` loads its SVG asynchronously from the asset bundle. Under the `flutter_test` fake clock that load does not complete on its own, and the default loading spinner animates forever, so `tester.pumpAndSettle()` times out.
+
+**If your test doesn't need the diagram itself** (you're testing surrounding UI), pass a static `loadingBuilder` and `pumpAndSettle()` works normally:
+
+```dart
+await tester.pumpWidget(MaterialApp(
+  home: Scaffold(
+    body: InteractiveBodySvg(
+      loadingBuilder: (context) => const SizedBox.shrink(),
+    ),
+  ),
+));
+await tester.pumpAndSettle(); // settles; the SVG stays unloaded
+```
+
+**If your test needs the rendered diagram**, let the real asset I/O run inside `tester.runAsync`:
+
+```dart
+await tester.runAsync(() async {
+  await tester.pumpWidget(MaterialApp(home: Scaffold(body: InteractiveBodySvg())));
+  // The first parse can take over a second; poll until the SVG appears.
+  for (var i = 0; i < 100 && find.byType(SvgPicture).evaluate().isEmpty; i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await tester.pump();
+  }
+});
+await tester.pump();
+expect(find.byType(SvgPicture), findsOneWidget); // from package:flutter_svg
 ```
 
 ## Contributing
