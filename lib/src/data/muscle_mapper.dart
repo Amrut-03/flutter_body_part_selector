@@ -1,4 +1,4 @@
-import '../../domain/entities/muscle.dart';
+import '../domain/muscle.dart';
 
 /// This handles the mapping between domain entities and data layer representations.
 class MuscleMapper {

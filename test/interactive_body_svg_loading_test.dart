@@ -13,7 +13,8 @@ void main() {
     // No pending-Timer failure when the test ends here.
   });
 
-  testWidgets('loadingBuilder replaces the spinner and lets pumpAndSettle settle',
+  testWidgets(
+      'loadingBuilder replaces the spinner and lets pumpAndSettle settle',
       (tester) async {
     await tester.pumpWidget(_wrap(InteractiveBodySvg(
       loadingBuilder: (context) => const Text('loading body map'),
@@ -24,12 +25,15 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
-  testWidgets('the SVG renders when loaded inside tester.runAsync', (tester) async {
+  testWidgets('the SVG renders when loaded inside tester.runAsync',
+      (tester) async {
     await tester.runAsync(() async {
       await tester.pumpWidget(_wrap(const InteractiveBodySvg()));
       // Let the real asset I/O complete outside the fake clock.
       // Up to ~5 s; the first XML parse of the diagram can take over 1 s.
-      for (var i = 0; i < 100 && find.byType(SvgPicture).evaluate().isEmpty; i++) {
+      for (var i = 0;
+          i < 100 && find.byType(SvgPicture).evaluate().isEmpty;
+          i++) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
         await tester.pump();
       }

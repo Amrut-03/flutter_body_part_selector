@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/muscle.dart';
+import '../domain/muscle.dart';
 
 /// Controller for managing the state of the interactive body selector.
 ///
@@ -30,13 +30,21 @@ class BodyMapController extends ChangeNotifier {
   ///
   /// Set to `true` for front view, `false` for back view. This property can
   /// be modified directly or through the view methods like [toggleView],
-  /// [setFrontView], or [setBackView].
+  /// [setFrontView], or [setBackView]. Setting it to a new value notifies
+  /// listeners.
   ///
   /// Example:
   /// ```dart
   /// controller.isFront = false; // Switch to back view
   /// ```
-  bool isFront = true;
+  bool get isFront => _isFront;
+  set isFront(bool value) {
+    if (_isFront == value) return;
+    _isFront = value;
+    notifyListeners();
+  }
+
+  bool _isFront = true;
 
   /// Creates a new [BodyMapController] with optional initial state.
   ///
@@ -62,13 +70,14 @@ class BodyMapController extends ChangeNotifier {
     bool initialIsFront = true,
   }) {
     if (initialSelectedMuscles != null) {
-      _selectedMuscles.addAll(initialSelectedMuscles
-          .where((m) => initialDisabledMuscles == null || !initialDisabledMuscles.contains(m)));
+      _selectedMuscles.addAll(initialSelectedMuscles.where((m) =>
+          initialDisabledMuscles == null ||
+          !initialDisabledMuscles.contains(m)));
     }
     if (initialDisabledMuscles != null) {
       _disabledMuscles.addAll(initialDisabledMuscles);
     }
-    isFront = initialIsFront;
+    _isFront = initialIsFront;
   }
 
   /// Currently selected muscles (read-only).
@@ -132,45 +141,41 @@ class BodyMapController extends ChangeNotifier {
   /// ```
   Set<Muscle> get disabledMuscles => Set.unmodifiable(_disabledMuscles);
 
-  /// Selects or deselects a muscle (toggles selection).
+  /// Toggles a muscle's selection: selects it if it isn't selected,
+  /// deselects it if it is. Disabled muscles are ignored.
   ///
-  /// If the muscle is already selected, it will be deselected. If it's not
-  /// selected, it will be selected. Disabled muscles cannot be selected.
-  ///
-  /// [muscle] - The muscle to select or deselect.
-  ///
-  /// Example:
-  /// ```dart
-  /// controller.selectMuscle(Muscle.bicepsLeft);
-  /// // If bicepsLeft was not selected, it's now selected
-  /// // If bicepsLeft was selected, it's now deselected
-  /// ```
-  void selectMuscle(Muscle muscle) {
-    if (_disabledMuscles.contains(muscle)) {
-      return;
-    }
-
-    if (_selectedMuscles.contains(muscle)) {
-      _selectedMuscles.remove(muscle);
-    } else {
-      _selectedMuscles.add(muscle);
-    }
-    notifyListeners();
-  }
-
-  /// Explicitly toggles a muscle's selection state.
-  ///
-  /// This is an alias for [selectMuscle] that makes the toggle intent explicit.
+  /// This is the method to pass as `InteractiveBodySvg.onMuscleTap` for
+  /// tap-to-toggle selection.
   ///
   /// [muscle] - The muscle to toggle.
   ///
   /// Example:
   /// ```dart
-  /// controller.toggleMuscle(Muscle.bicepsLeft);
+  /// InteractiveBodySvg(
+  ///   selectedMuscles: controller.selectedMuscles,
+  ///   onMuscleTap: controller.toggleMuscle,
+  /// )
   /// ```
   void toggleMuscle(Muscle muscle) {
-    selectMuscle(muscle); 
+    if (_disabledMuscles.contains(muscle)) {
+      return;
+    }
+
+    if (!_selectedMuscles.remove(muscle)) {
+      _selectedMuscles.add(muscle);
+    }
+    notifyListeners();
   }
+
+  /// Same as [toggleMuscle]: selects the muscle if it isn't selected and
+  /// **deselects it if it is**.
+  ///
+  /// Kept under this name for compatibility with earlier versions. Prefer
+  /// [toggleMuscle], whose name says what it does; to only ever add muscles,
+  /// use [selectMultiple].
+  ///
+  /// [muscle] - The muscle to toggle.
+  void selectMuscle(Muscle muscle) => toggleMuscle(muscle);
 
   /// Deselects a specific muscle.
   ///
@@ -206,7 +211,8 @@ class BodyMapController extends ChangeNotifier {
   /// ```
   void setSelectedMuscles(Set<Muscle> muscles) {
     _selectedMuscles.clear();
-    _selectedMuscles.addAll(muscles.where((m) => !_disabledMuscles.contains(m)));
+    _selectedMuscles
+        .addAll(muscles.where((m) => !_disabledMuscles.contains(m)));
     notifyListeners();
   }
 
@@ -249,9 +255,19 @@ class BodyMapController extends ChangeNotifier {
     }
   }
 
+  /// Replaces the selection **without** notifying listeners.
+  ///
+  /// Meant for seeding state before the first build, for example in
+  /// `initState`, where a notification would be redundant. Disabled muscles
+  /// are excluded. After the UI is built, use [setSelectedMuscles] so
+  /// listeners rebuild. To seed state at construction time, prefer
+  /// `BodyMapController(initialSelectedMuscles: ...)`.
+  ///
+  /// [muscles] - The muscles to select.
   void setInitialSelection(Set<Muscle> muscles) {
     _selectedMuscles.clear();
-    _selectedMuscles.addAll(muscles.where((m) => !_disabledMuscles.contains(m)));
+    _selectedMuscles
+        .addAll(muscles.where((m) => !_disabledMuscles.contains(m)));
   }
 
   /// Enables a previously disabled muscle.
@@ -322,7 +338,6 @@ class BodyMapController extends ChangeNotifier {
   /// ```
   void toggleView() {
     isFront = !isFront;
-    notifyListeners();
   }
 
   /// Sets the view to show the front of the body.
@@ -334,10 +349,7 @@ class BodyMapController extends ChangeNotifier {
   /// controller.setFrontView();
   /// ```
   void setFrontView() {
-    if (!isFront) {
-      isFront = true;
-      notifyListeners();
-    }
+    isFront = true;
   }
 
   /// Sets the view to show the back of the body.
@@ -349,10 +361,7 @@ class BodyMapController extends ChangeNotifier {
   /// controller.setBackView();
   /// ```
   void setBackView() {
-    if (isFront) {
-      isFront = false;
-      notifyListeners();
-    }
+    isFront = false;
   }
 
   @override

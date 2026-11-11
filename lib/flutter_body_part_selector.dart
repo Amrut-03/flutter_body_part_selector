@@ -18,14 +18,14 @@
 /// InteractiveBodySvg(
 ///   isFront: controller.isFront,
 ///   selectedMuscles: controller.selectedMuscles,
-///   onMuscleTap: controller.selectMuscle,
+///   onMuscleTap: controller.toggleMuscle,
 /// )
 /// ```
 library;
 
 // Domain layer - entities
-export 'feature/flutter_body_part_selector/domain/entities/muscle.dart';
+export 'src/domain/muscle.dart';
 
 // Presentation layer - controllers and widgets
-export 'feature/flutter_body_part_selector/presentation/controllers/body_map_controller.dart';
-export 'feature/flutter_body_part_selector/presentation/widgets/interactive_body_svg.dart';
+export 'src/presentation/body_map_controller.dart';
+export 'src/presentation/interactive_body_svg.dart';
