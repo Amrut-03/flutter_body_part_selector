@@ -1,3 +1,27 @@
+## 1.3.0
+
+* **FIXED**: `hitTestPadding` had no effect. It is now a real tap tolerance: a tap up to that many SVG units outside a muscle's edge selects it.
+* **FIXED**: Selection changes made while the diagram was still processing a previous change were dropped, leaving the highlight out of sync with `selectedMuscles`.
+* **FIXED**: After a failed load, the error view stayed on screen even when a later load succeeded.
+* **FIXED**: A missing custom `asset` silently showed the built-in diagram instead of the error view.
+* **FIXED**: The alpha of `highlightColor` and `disabledColor` was ignored. Colors are now drawn with their alpha, so the default highlight (blue at 60%) is translucent as intended. The `disabledColor` default is now opaque `Colors.grey` so disabled muscles look the same as before.
+* **FIXED**: Taps fired on touch-down, so starting a scroll on the diagram selected a muscle and a long press also counted as a tap. Taps now fire on release.
+* **FIXED**: `onMuscleTapDisabled` is now called for taps while `enableSelection` is `false`, as documented.
+* **FIXED**: A `viewBox` separated by commas or multiple spaces no longer fails to load.
+* **NEW**: `onSelectAnimationBuilder` is now implemented. It was accepted but never called.
+* **PERFORMANCE**: Each SVG is parsed once into paths and cached. Selecting, deselecting or recoloring muscles now only repaints, instead of re-parsing, rewriting and re-rendering the whole SVG (431 KB for the front view) on every change. Switching back to an already loaded view is instant.
+* **IMPROVED**: Hit testing uses the exact path geometry, including curves, arcs, relative commands and `fill-rule="evenodd"`.
+* **FIXED**: Setting `BodyMapController.isFront` directly now notifies listeners. It used to change the value silently, so the UI didn't rebuild.
+* **CHANGED**: `Muscle.displayName` now capitalizes every word: `"Biceps Left"` instead of `"biceps Left"`. Update any code that compares against the old strings.
+* **IMPROVED**: `toggleMuscle` is now the documented tap-to-toggle method, and the README and example pass it to `onMuscleTap`. `selectMuscle` is unchanged and still toggles; its docs now say so.
+* **DOCS**: Documented `setInitialSelection`, which replaces the selection without notifying listeners. Corrected the per-view grouping in the `Muscle` enum (triceps are on the back view).
+* **EXAMPLE**: Added Android and iOS runners to the example app. The VS Code launch configurations no longer pin Windows/Android devices.
+* **DEPRECATED**: `isInitialSelection`. It ignores taps while `true` and is no longer needed to avoid flicker. Pass the starting selection through `selectedMuscles` instead.
+* **CHANGED**: Minimum versions lowered to Dart 3.6 / Flutter 3.27 (was Dart 3.10.4). `xml` 7.x is now allowed.
+* **CHANGED**: Implementation files moved under `lib/src/`. Import `package:flutter_body_part_selector/flutter_body_part_selector.dart`. Deep imports of internal files (for example `.../feature/.../muscle_mapper.dart`) no longer resolve.
+* **REMOVED**: Unused internal duplicates (a second `Muscle` enum, a second SVG ID map, an unused repository layer) and the app-template platform folders that were being published with the package.
+* **DOCS**: Merged the useful parts of `FEATURES.md` and `USAGE_GUIDE.md` into the README and removed both. They documented parameters that no longer exist (`baseColor`, `performanceMode`). Corrected the per-view muscle lists.
+
 ## 1.2.2
 
 * **FIXED**: Widget tests no longer hang or fail because of `InteractiveBodySvg`:

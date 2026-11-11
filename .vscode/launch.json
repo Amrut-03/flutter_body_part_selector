@@ -1,45 +1,27 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // Launch configurations for the example app. They run on whichever device
+    // is selected in the editor (Android, iOS or Chrome).
     "version": "0.2.0",
     "configurations": [
         {
             "name": "example",
             "request": "launch",
             "type": "dart",
-            "program": "example/lib/main.dart",
-            "deviceId": "windows"
-        },
-        {
-            "name": "example (Android)",
-            "request": "launch",
-            "type": "dart",
-            "program": "example/lib/main.dart",
-            "deviceId": "android"
-        },
-        {
-            "name": "example (Chrome)",
-            "request": "launch",
-            "type": "dart",
-            "program": "example/lib/main.dart",
-            "deviceId": "chrome"
+            "program": "example/lib/main.dart"
         },
         {
             "name": "example (profile mode)",
             "request": "launch",
             "type": "dart",
             "program": "example/lib/main.dart",
-            "flutterMode": "profile",
-            "deviceId": "windows"
+            "flutterMode": "profile"
         },
         {
             "name": "example (release mode)",
             "request": "launch",
             "type": "dart",
             "program": "example/lib/main.dart",
-            "flutterMode": "release",
-            "deviceId": "windows"
+            "flutterMode": "release"
         }
     ]
 }
