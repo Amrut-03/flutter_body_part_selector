@@ -76,7 +76,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
                 child: InteractiveBodySvg(
                   isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
-                  onMuscleTap: controller.selectMuscle,
+                  onMuscleTap: controller.toggleMuscle,
                   highlightColor: Colors.blue.withValues(alpha: 0.7),
                 ),
               ),

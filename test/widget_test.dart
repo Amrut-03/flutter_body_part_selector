@@ -35,7 +35,7 @@ void main() {
     // Test initial state
     expect(controller.selectedMuscles.isEmpty, true);
     expect(controller.isFront, true);
-    
+
     // Test muscle selection
     controller.selectMuscle(Muscle.bicepsLeft);
     expect(controller.isSelected(Muscle.bicepsLeft), true);
@@ -45,15 +45,16 @@ void main() {
     controller.selectMuscle(Muscle.bicepsLeft);
     expect(controller.isSelected(Muscle.bicepsLeft), false);
     expect(controller.selectedMuscles.isEmpty, true);
-    
+
     // Test view toggle
     controller.toggleView();
     expect(controller.isFront, false);
-    
+
     controller.dispose();
   });
 
-  testWidgets('BodyMapController - new selection methods', (WidgetTester tester) async {
+  testWidgets('BodyMapController - new selection methods',
+      (WidgetTester tester) async {
     final controller = BodyMapController();
 
     // Test toggleMuscle
@@ -79,11 +80,12 @@ void main() {
     expect(controller.selectedMuscles.length, 2);
     controller.selectMultiple({Muscle.chestLeft}); // Add more
     expect(controller.selectedMuscles.length, 3);
-    
+
     controller.dispose();
   });
 
-  testWidgets('BodyMapController - constructor with initial state', (WidgetTester tester) async {
+  testWidgets('BodyMapController - constructor with initial state',
+      (WidgetTester tester) async {
     final controller = BodyMapController(
       initialSelectedMuscles: {Muscle.bicepsLeft, Muscle.tricepsRight},
       initialDisabledMuscles: {Muscle.chestLeft},
@@ -105,7 +107,7 @@ void main() {
     // Test that disabled muscles can't be selected
     controller.selectMuscle(Muscle.chestLeft);
     expect(controller.isSelected(Muscle.chestLeft), false);
-    
+
     controller.dispose();
   });
 }

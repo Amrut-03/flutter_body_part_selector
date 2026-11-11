@@ -2,7 +2,7 @@
 
 An interactive body selector package for Flutter that allows users to select muscles on a body diagram. Users can tap on muscles in the SVG body diagram or select them programmatically, with visual highlighting of selected muscles. 
 
-**⚠️ IMPORTANT: This package includes mandatory SVG assets that must be used. Custom SVG files are not supported.**
+The front and back body diagrams ship with the package; no asset setup is needed.
 
 https://github.com/user-attachments/assets/8ba0b47b-fa72-4055-bee8-26f50427437c
 
@@ -13,6 +13,8 @@ https://github.com/user-attachments/assets/8ba0b47b-fa72-4055-bee8-26f50427437c
 - 🔄 **Front/Back Views**: Toggle between front and back body views
 - 📱 **Programmatic Control**: Select muscles programmatically using the controller
 - 🎛️ **Customizable**: Customize highlight colors and disabled muscle colors
+- 🚫 **Disabled Muscles**: Lock muscles (injured, premium, unavailable) so they render greyed out and can't be selected
+- 🪝 **Hooks**: Long-press, tooltip, semantic-label and selection-animation callbacks
 - 📦 **Easy to Use**: Simple API with minimal setup required - includes all required assets
 - 🎨 **Built-in Assets**: Package includes mandatory SVG body diagrams (front and back views)
 
@@ -22,7 +24,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_body_part_selector: ^1.2.1
+  flutter_body_part_selector: ^1.3.0
 ```
 
 Then run:
@@ -82,7 +84,7 @@ class _BodySelectorExampleState extends State<BodySelectorExample> {
                 child: InteractiveBodySvg(
                   isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
-                  onMuscleTap: controller.selectMuscle,
+                  onMuscleTap: controller.toggleMuscle,
                 ),
               ),
             ],
@@ -104,7 +106,7 @@ The `BodyMapController` manages the state of the body selector:
 final controller = BodyMapController();
 
 // Select a muscle programmatically (toggles if already selected)
-controller.selectMuscle(Muscle.bicepsLeft);
+controller.toggleMuscle(Muscle.bicepsLeft);
 
 // Clear all selections
 controller.clearSelection();
@@ -118,7 +120,7 @@ controller.setBackView();
 
 // Access current state
 final selected = controller.selectedMuscles; // Returns Set<Muscle> (read-only getter)
-final isFront = controller.isFront; // Writable: can be set directly
+final isFront = controller.isFront; // Writable: setting it notifies listeners
 
 // Set entire selection using setter (convenience)
 controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
@@ -287,7 +289,7 @@ class _BodySelectorPageState extends State<BodySelectorPage> {
                 return InteractiveBodySvg(
                   isFront: controller.isFront,
                   selectedMuscles: controller.selectedMuscles,
-                  onMuscleTap: controller.selectMuscle,
+                  onMuscleTap: controller.toggleMuscle,
                 );
               },
             ),
@@ -307,13 +309,15 @@ class _BodySelectorPageState extends State<BodySelectorPage> {
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
-  onMuscleTap: controller.selectMuscle,
-  highlightColor: Colors.red.withOpacity(0.7), // Custom highlight color
+  onMuscleTap: controller.toggleMuscle,
+  highlightColor: Colors.red.withValues(alpha: 0.7), // Custom highlight color
   disabledColor: Colors.grey, // Custom color for disabled muscles
   selectedStrokeWidth: 3.0, // Stroke width for selected muscles
   unselectedStrokeWidth: 1.0, // Stroke width for unselected muscles
 )
 ```
+
+Color alpha is respected: a highlight color with `alpha: 0.7` is drawn 70% opaque. Disabled muscles are additionally drawn at 40% opacity.
 
 #### Size and Layout
 
@@ -321,7 +325,7 @@ InteractiveBodySvg(
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
-  onMuscleTap: controller.selectMuscle,
+  onMuscleTap: controller.toggleMuscle,
   width: 300, // Fixed width
   height: 600, // Fixed height
   fit: BoxFit.cover, // How to fit the SVG
@@ -335,12 +339,46 @@ InteractiveBodySvg(
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
-  onMuscleTap: controller.selectMuscle,
+  onMuscleTap: controller.toggleMuscle,
   enableSelection: true, // Enable/disable tap selection
   hitTestPadding: 2.0, // Padding for hit-testing (makes taps more forgiving)
   onMuscleTapDisabled: (muscle) {
-    // Called when a muscle is tapped but selection is disabled
-    print('Tapped $muscle but selection is disabled');
+    // Called when a disabled muscle is tapped, or any muscle while
+    // enableSelection is false
+    print('Tapped $muscle but it cannot be selected');
+  },
+)
+```
+
+Taps fire when the finger lifts, so a scroll or drag that starts on a muscle does not select it, and a long press does not also count as a tap.
+
+#### Hooks
+
+```dart
+InteractiveBodySvg(
+  selectedMuscles: controller.selectedMuscles,
+  onMuscleTap: controller.toggleMuscle,
+
+  // Long press on a muscle
+  onMuscleLongPress: (muscle) => print('Long-pressed ${muscle.displayName}'),
+
+  // Text shown in a SnackBar on long press (needs a ScaffoldMessenger,
+  // which MaterialApp provides). Return null to show nothing.
+  tooltipBuilder: (muscle) => '${muscle.displayName} - tap to select',
+
+  // Screen-reader label: the labels of the selected muscles, joined by commas
+  semanticLabelBuilder: (muscle) => '${muscle.displayName} selected',
+
+  // Wraps the diagram each time a muscle is newly selected. The subtree is
+  // rebuilt on every new selection, so this pulse replays each time.
+  onSelectAnimationBuilder: (context, child, muscle) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 1.04, end: 1.0),
+      duration: const Duration(milliseconds: 250),
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: child,
+    );
   },
 )
 ```
@@ -355,26 +393,27 @@ The package supports the following muscles:
 - Delts (Left/Right)
 - Chest (Left/Right)
 - Abs
-- Triceps (Left/Right)
 - Biceps (Left/Right)
 - Forearms (Left/Right)
 - Quads (Left/Right)
 - Calves (Left/Right)
 
 ### Back View
+- Traps (Left/Right)
+- Delts (Left/Right)
+- Triceps (Left/Right)
 - Lats (Left/Right)
 - Lower Lats Back (Left/Right)
+- Forearms (Left/Right)
 - Glutes (Left/Right)
 - Hamstrings (Left/Right)
-- Triceps (Left/Right)
-- Delts (Left/Right)
-- Traps (Left/Right)
+- Calves (Left/Right)
+
+Muscles that appear in both views (traps, delts, forearms, calves) map to the same `Muscle` value, so a selection made on one side stays highlighted on the other.
 
 ## Assets
 
-**IMPORTANT:** This package includes the required SVG body diagrams (front and back views) that are **mandatory** for the package to work correctly. You **must** use the package assets - custom SVG files are not supported.
-
-The package assets are pre-configured with the correct muscle IDs and mappings. Using custom assets will result in incorrect behavior.
+The package includes the front and back SVG body diagrams, pre-configured with the muscle IDs the widget maps to `Muscle` values.
 
 ### Using Package Assets
 
@@ -384,7 +423,7 @@ The package includes default SVG assets that are **automatically used**. Simply 
 InteractiveBodySvg(
   isFront: true, // Automatically uses package's front body asset
   selectedMuscles: controller.selectedMuscles,
-  onMuscleTap: controller.selectMuscle,
+  onMuscleTap: controller.toggleMuscle,
 )
 ```
 
@@ -407,14 +446,19 @@ The core widget for displaying the interactive body diagram.
 - `unselectedStrokeWidth` (double, default: 1.0): Stroke width for unselected muscles
 - `enableSelection` (bool, default: true): Enable/disable tap selection
 - `fit` (BoxFit, default: BoxFit.contain): How to fit the SVG
-- `hitTestPadding` (double, default: 2.0): Padding for hit-testing
+- `hitTestPadding` (double, default: 2.0): How far outside a muscle's edge, in SVG units, a tap still counts as hitting it
 - `width` (double?, optional): Fixed width
 - `height` (double?, optional): Fixed height
 - `alignment` (Alignment, default: Alignment.center): Alignment of SVG
 - `onMuscleTapDisabled` (void Function(Muscle)?, optional): Callback when muscle is tapped but selection is disabled
 - `onMuscleLongPress` (void Function(Muscle)?, optional): Callback when a muscle is long-pressed
+- `tooltipBuilder` (String? Function(Muscle)?, optional): Text shown in a SnackBar when a muscle is long-pressed
+- `semanticLabelBuilder` (String? Function(Muscle)?, optional): Screen-reader label for each selected muscle
+- `onSelectAnimationBuilder` (Widget Function(BuildContext, Widget, Muscle)?, optional): Wraps the diagram each time a muscle is newly selected; see [Hooks](#hooks)
+- `hitTestBehavior` (HitTestBehavior, default: deferToChild): Hit-test behavior of the gesture detector
 - `loadingBuilder` (WidgetBuilder?, optional): Widget shown while the SVG loads (default: a centered `CircularProgressIndicator`). See [Testing](#testing).
 - `asset` (String?, optional, advanced): Overrides the built-in SVG path. Not recommended; see [Common Pitfalls](#common-pitfalls).
+- `isInitialSelection` (bool, **deprecated**): Ignores taps while `true`. No longer needed; pass the starting selection through `selectedMuscles` instead.
 
 ### `BodyMapController`
 
@@ -424,8 +468,8 @@ Controller for managing the body selector state.
 - `BodyMapController({Set<Muscle>? initialSelectedMuscles, Set<Muscle>? initialDisabledMuscles, bool initialIsFront = true})`: Create a controller with optional initial state
 
 **Selection Methods (Writable):**
-- `selectMuscle(Muscle)`: Select or toggle a muscle (if already selected, deselects it)
-- `toggleMuscle(Muscle)`: Explicitly toggle a muscle's selection state
+- `toggleMuscle(Muscle)`: Select the muscle, or deselect it if already selected. Pass it as `onMuscleTap` for tap-to-toggle
+- `selectMuscle(Muscle)`: Same as `toggleMuscle` (it also deselects an already-selected muscle); kept for compatibility
 - `deselectMuscle(Muscle)`: Deselect a specific muscle
 - `setSelectedMuscles(Set<Muscle>)`: Set the entire selection (replaces current selection)
 - `selectMultiple(Set<Muscle>)`: Add multiple muscles to current selection (without clearing)
@@ -435,6 +479,8 @@ Controller for managing the body selector state.
 - `toggleView()`: Toggle between front and back view
 - `setFrontView()`: Set view to front
 - `setBackView()`: Set view to back
+
+- `setInitialSelection(Set<Muscle>)`: Replace the selection **without** notifying listeners, for seeding state before the first build
 
 **Disabled Muscle Methods (Writable):**
 - `disableMuscle(Muscle)`: Disable a muscle (locks it, removes from selection)
@@ -447,7 +493,7 @@ Controller for managing the body selector state.
   - **Setter**: Replaces entire selection (equivalent to `setSelectedMuscles()`)
   - Example: `controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};`
 - `disabledMuscles` (Set<Muscle>, **read-only**): Currently disabled muscles. Use disabled muscle methods to modify.
-- `isFront` (bool, **writable**): Whether showing front view. Can be set directly or use view methods.
+- `isFront` (bool, **writable**): Whether showing front view. Can be set directly (notifies listeners) or use view methods.
 - `isSelected(Muscle)` (bool, **read-only**): Check if a muscle is selected
 - `isDisabled(Muscle)` (bool, **read-only**): Check if a muscle is disabled
 
@@ -472,7 +518,7 @@ controller.selectedMuscles.clear(); // Error!
 controller.selectedMuscles = {Muscle.bicepsLeft, Muscle.tricepsRight};
 
 // ✅ CORRECT - Or use the controller methods
-controller.selectMuscle(Muscle.bicepsLeft);
+controller.toggleMuscle(Muscle.bicepsLeft);
 controller.setSelectedMuscles({Muscle.bicepsLeft, Muscle.tricepsRight});
 controller.clearSelection();
 ```
@@ -482,7 +528,7 @@ controller.clearSelection();
 ```dart
 // ❌ WRONG - UI won't update when selection changes
 final controller = BodyMapController();
-controller.selectMuscle(Muscle.bicepsLeft);
+controller.toggleMuscle(Muscle.bicepsLeft);
 // Widget won't rebuild automatically
 ```
 
@@ -550,17 +596,17 @@ void dispose() {
 }
 ```
 
-### ❌ Don't: Try to use custom SVG assets
+### ❌ Don't: Use a custom SVG without the package's element IDs
 
 ```dart
-// ❌ WRONG - Custom SVG files are not supported
+// ❌ WRONG - Muscle taps and highlights only work for elements whose
+// IDs match the package's built-in SVGs (e.g. `biceps_left`, `lats_right`)
 InteractiveBodySvg(
-  asset: 'assets/my_body.svg', // Muscle taps only work if every element ID
-                               // matches the package's built-in SVGs
+  asset: 'assets/my_body.svg',
 )
 ```
 
-The `asset` parameter still exists as an advanced override, but the muscle mappings depend on the exact element IDs in the package's SVGs.
+The `asset` parameter is an advanced override. Each muscle must be a `<path>` or a `<g>` of paths whose `id` matches the built-in SVGs. If the asset can't be loaded, the widget shows an error instead of falling back to the built-in diagram.
 
 ### ✅ Do: Use the package's included assets
 

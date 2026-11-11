@@ -1,11 +1,12 @@
 name: flutter_body_part_selector
 description: "Interactive body selector for Flutter. Tap muscles on SVG body diagram or select programmatically with visual highlighting. Includes built-in assets."
-version: 1.2.2
+version: 1.3.0
 homepage: https://github.com/Amrut-03/flutter_body_part_selector
 repository: https://github.com/Amrut-03/flutter_body_part_selector
 
 environment:
-  sdk: ^3.10.4
+  sdk: ^3.6.0
+  flutter: ">=3.27.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -17,8 +18,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_svg: ^2.2.3
-  xml: ^6.6.1
+  flutter_svg: ^2.0.17
+  path_parsing: ^1.0.1
+  xml: ">=6.5.0 <8.0.0"
 
 dev_dependencies:
   flutter_test:
